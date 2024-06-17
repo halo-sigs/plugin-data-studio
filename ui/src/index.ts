@@ -1,24 +1,27 @@
-import { definePlugin } from "@halo-dev/console-shared";
-import HomeView from "./views/HomeView.vue";
-import { IconPlug } from "@halo-dev/components";
-import { markRaw } from "vue";
+import { definePlugin } from '@halo-dev/console-shared';
+import { markRaw } from 'vue';
+import TablerDatabaseEdit from '~icons/tabler/database-edit';
+import './styles/main.css';
+import DataStudio from './views/DataStudio.vue';
 
 export default definePlugin({
   components: {},
   routes: [
     {
-      parentName: "Root",
+      parentName: 'ToolsRoot',
       route: {
-        path: "/example",
-        name: "Example",
-        component: HomeView,
+        path: 'data-studio',
+        name: 'DataStudio',
+        component: DataStudio,
         meta: {
-          title: "示例页面",
+          title: 'Data Studio（数据工厂）',
+          description: '支持查询系统内所有模型，以及维护任意模型数据',
           searchable: true,
+          hideFooter: true,
+          permissions: ['*'],
           menu: {
-            name: "示例页面",
-            group: "示例分组",
-            icon: markRaw(IconPlug),
+            name: 'Data Studio',
+            icon: markRaw(TablerDatabaseEdit),
             priority: 0,
           },
         },
