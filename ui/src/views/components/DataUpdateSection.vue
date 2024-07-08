@@ -2,9 +2,9 @@
 import DataEditor from '@/components/DataEditor.vue';
 import type { Scheme, Unstructured } from '@/types';
 import { buildBaseApiUrl } from '@/utils/api';
+import { axiosInstance } from '@halo-dev/api-client';
 import { Toast, VButton, VSpace } from '@halo-dev/components';
 import { useQueryClient } from '@tanstack/vue-query';
-import axios from 'axios';
 import { ref } from 'vue';
 
 const queryClient = useQueryClient();
@@ -30,10 +30,13 @@ async function handleSave() {
     isSubmitting.value = true;
 
     // metadata.name may appear in a form similar to `posts.content.halo.run/5152aea5-c2e8-4717-8bba-2263d46e19d5`
-    // so we need to use encodeURIComponent 
+    // so we need to use encodeURIComponent
     const name = encodeURIComponent(props.data?.metadata?.name);
 
-    await axios.put(`${buildBaseApiUrl(props.scheme)}/${name}`, dataEditorRef.value?.getData());
+    await axiosInstance.put(
+      `${buildBaseApiUrl(props.scheme)}/${name}`,
+      dataEditorRef.value?.getData()
+    );
     Toast.success('保存成功');
     queryClient.invalidateQueries({ queryKey: ['plugin-data-studio:data'] });
   } catch (error) {

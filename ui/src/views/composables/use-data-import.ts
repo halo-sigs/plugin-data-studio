@@ -1,9 +1,9 @@
 import type { Scheme } from '@/types';
 import { buildBaseApiUrl } from '@/utils/api';
+import { axiosInstance } from '@halo-dev/api-client';
 import { Dialog, Toast } from '@halo-dev/components';
 import { useQueryClient } from '@tanstack/vue-query';
 import { useFileDialog } from '@vueuse/core';
-import axios from 'axios';
 import { watch, type Ref } from 'vue';
 
 export function useDataImport(scheme: Ref<Scheme>) {
@@ -42,8 +42,9 @@ export function useDataImport(scheme: Ref<Scheme>) {
           let originData = undefined;
 
           try {
-            originData = (await axios.get(`${buildBaseApiUrl(scheme.value)}/${data.metadata.name}`))
-              .data;
+            originData = (
+              await axiosInstance.get(`${buildBaseApiUrl(scheme.value)}/${data.metadata.name}`)
+            ).data;
           } catch (error) {}
 
           if (originData) {
@@ -52,7 +53,10 @@ export function useDataImport(scheme: Ref<Scheme>) {
               description: '当前导入的数据已存在，是否更新？',
               onConfirm: async () => {
                 try {
-                  await axios.put(`${buildBaseApiUrl(scheme.value)}/${data.metadata.name}`, data);
+                  await axiosInstance.put(
+                    `${buildBaseApiUrl(scheme.value)}/${data.metadata.name}`,
+                    data
+                  );
                   Toast.success('更新成功');
                 } catch (error) {
                   Toast.error('更新失败');
@@ -60,7 +64,7 @@ export function useDataImport(scheme: Ref<Scheme>) {
               },
             });
           } else {
-            await axios.post(buildBaseApiUrl(scheme.value), data);
+            await axiosInstance.post(buildBaseApiUrl(scheme.value), data);
             Toast.success('导入成功');
           }
 

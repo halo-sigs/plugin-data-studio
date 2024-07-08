@@ -2,9 +2,9 @@
 import DataEditor from '@/components/DataEditor.vue';
 import type { Scheme } from '@/types';
 import { buildBaseApiUrl } from '@/utils/api';
+import { axiosInstance } from '@halo-dev/api-client';
 import { Toast, VButton, VModal, VSpace } from '@halo-dev/components';
 import { useQueryClient } from '@tanstack/vue-query';
-import axios from 'axios';
 import { ref } from 'vue';
 
 const queryClient = useQueryClient();
@@ -29,7 +29,7 @@ const isSubmitting = ref(false);
 async function handleSave() {
   try {
     isSubmitting.value = true;
-    await axios.post(buildBaseApiUrl(props.scheme), dataEditorRef.value?.getData());
+    await axiosInstance.post(buildBaseApiUrl(props.scheme), dataEditorRef.value?.getData());
     Toast.success('保存成功');
     queryClient.invalidateQueries({ queryKey: ['plugin-data-studio:data'] });
     modal.value?.close();

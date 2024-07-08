@@ -2,10 +2,10 @@
 import WarningModal from '@/components/WarningModal.vue';
 import type { ListResponse, Unstructured } from '@/types';
 import { buildBaseApiUrl } from '@/utils/api';
+import { axiosInstance } from '@halo-dev/api-client';
 import { VButton, VCard, VLoading, VPageHeader, VPagination, VSpace } from '@halo-dev/components';
 import { useQuery } from '@tanstack/vue-query';
 import { useRouteQuery } from '@vueuse/router';
-import axios from 'axios';
 import { computed, ref, watch } from 'vue';
 import TablerDatabaseEdit from '~icons/tabler/database-edit';
 import DataCreationModal from './components/DataCreationModal.vue';
@@ -16,7 +16,9 @@ import { useDataImport } from './composables/use-data-import';
 const { data: schemes } = useQuery({
   queryKey: ['plugin-data-studio:schemes'],
   queryFn: async () => {
-    const { data } = await axios.get('/apis/console.api.datastudio.halo.run/v1alpha1/schemes');
+    const { data } = await axiosInstance.get(
+      '/apis/console.api.datastudio.halo.run/v1alpha1/schemes'
+    );
     return data;
   },
 });
@@ -48,7 +50,7 @@ const size = useRouteQuery<number>('size', 20, {
 const { data, isLoading } = useQuery({
   queryKey: ['plugin-data-studio:data', selectedScheme, page, size],
   queryFn: async () => {
-    const { data } = await axios.get<ListResponse<Unstructured>>(
+    const { data } = await axiosInstance.get<ListResponse<Unstructured>>(
       buildBaseApiUrl(selectedScheme.value),
       {
         params: {

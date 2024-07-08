@@ -2,6 +2,7 @@
 import type { Unstructured } from '@/types';
 import { buildBaseApiUrl } from '@/utils/api';
 import { formatDatetime } from '@/utils/date';
+import { axiosInstance } from '@halo-dev/api-client';
 import {
   Dialog,
   Toast,
@@ -12,7 +13,6 @@ import {
   VStatusDot,
 } from '@halo-dev/components';
 import { useQueryClient } from '@tanstack/vue-query';
-import axios from 'axios';
 
 const queryClient = useQueryClient();
 
@@ -44,7 +44,7 @@ function handleDelete() {
     confirmType: 'danger',
     async onConfirm() {
       try {
-        await axios.delete(`${buildBaseApiUrl(props.scheme)}/${props.data.metadata.name}`);
+        await axiosInstance.delete(`${buildBaseApiUrl(props.scheme)}/${props.data.metadata.name}`);
         Toast.success('删除成功');
 
         queryClient.invalidateQueries({ queryKey: ['plugin-data-studio:data'] });
