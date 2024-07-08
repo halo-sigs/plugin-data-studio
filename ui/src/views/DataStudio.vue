@@ -3,7 +3,15 @@ import WarningModal from '@/components/WarningModal.vue';
 import type { ListResponse, Unstructured } from '@/types';
 import { buildBaseApiUrl } from '@/utils/api';
 import { axiosInstance } from '@halo-dev/api-client';
-import { VButton, VCard, VLoading, VPageHeader, VPagination, VSpace } from '@halo-dev/components';
+import {
+  IconCloseCircle,
+  VButton,
+  VCard,
+  VLoading,
+  VPageHeader,
+  VPagination,
+  VSpace,
+} from '@halo-dev/components';
 import { useQuery } from '@tanstack/vue-query';
 import { useRouteQuery } from '@vueuse/router';
 import { computed, ref, watch } from 'vue';
@@ -47,8 +55,10 @@ const size = useRouteQuery<number>('size', 20, {
   transform: Number,
 });
 
+const keyword = ref('');
+
 const { data, isLoading } = useQuery({
-  queryKey: ['plugin-data-studio:data', selectedScheme, page, size],
+  queryKey: ['plugin-data-studio:data', selectedScheme, page, size, keyword],
   queryFn: async () => {
     const { data } = await axiosInstance.get<ListResponse<Unstructured>>(
       buildBaseApiUrl(selectedScheme.value),
@@ -56,6 +66,7 @@ const { data, isLoading } = useQuery({
         params: {
           page: page.value,
           size: size.value,
+          fieldSelector: keyword.value ? `metadata.name=${keyword.value}` : undefined,
         },
       }
     );
@@ -150,9 +161,21 @@ const { open } = useDataImport(selectedScheme);
             v-if="selectedScheme"
             class="ds-sticky ds-top-0 ds-flex ds-h-12 ds-w-full ds-items-center ds-justify-between ds-border-b ds-px-4"
           >
-            <h2 class="ds-font-semibold ds-text-green-900">
-              {{ selectedScheme?.groupVersionKind?.kind }}
-            </h2>
+            <div class="ds-flex ds-items-center ds-gap-4">
+              <h2 class="ds-font-semibold ds-text-green-900">
+                {{ selectedScheme?.groupVersionKind?.kind }}
+              </h2>
+              <input
+                v-model.lazy="keyword"
+                placeholder="输入 metadata.name 筛选"
+                class="ds-text-sm ds-px-0 ds-w-64"
+              />
+              <IconCloseCircle
+                v-if="keyword"
+                class="text-primary ds-cursor-pointer"
+                @click="keyword = ''"
+              />
+            </div>
             <VSpace>
               <VButton size="sm" @click="open">导入</VButton>
               <VButton size="sm" type="secondary" @click="creationModalVisible = true">
