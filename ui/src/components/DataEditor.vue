@@ -67,57 +67,57 @@ defineExpose({
 <style lang="scss">
 #jsonEditorContainer {
   .row {
-    @apply ds-py-1.5;
+    @apply py-1.5;
   }
   .je-object__controls {
-    @apply ds-space-x-1.5;
+    @apply space-x-1.5;
   }
 
   .je-form-input-label {
-    @apply ds-text-sm;
+    @apply text-sm;
   }
 
   .je-modal {
     button {
-      @apply ds-m-1;
+      @apply m-1;
     }
 
     .je-edit-json--textarea {
-      @apply ds-w-96 ds-border-b ds-border-solid ds-border-gray-100;
+      @apply w-96 border-b border-solid border-gray-100;
     }
   }
 
   .form-control {
-    @apply ds-space-y-1.5 ds-py-1.5;
+    @apply space-y-1.5 py-1.5;
 
     input,
     select {
-      @apply ds-h-9 ds-w-1/2 ds-rounded-md ds-border ds-border-solid ds-border-gray-200 ds-text-sm ds-text-gray-800 focus:ds-ring-1 #{!important};
+      @apply h-9 w-1/2 rounded-md border border-solid border-gray-200 text-sm text-gray-800 focus:ring-1 #{!important};
     }
   }
 
   .je-indented-panel {
-    @apply ds-m-0 ds-mb-2 ds-mt-3 ds-rounded-md ds-p-3 #{!important};
+    @apply m-0 mb-2 mt-3 rounded-md p-3 #{!important};
   }
 
   .je-header {
     span {
-      @apply ds-text-sm ds-font-bold;
+      @apply text-sm font-bold;
     }
 
     button {
       span {
-        @apply ds-text-xs ds-font-normal;
+        @apply text-xs font-normal;
       }
     }
   }
 
   p {
-    @apply ds-py-1 ds-text-xs ds-font-normal ds-text-gray-600 #{!important};
+    @apply py-1 text-xs font-normal text-gray-600 #{!important};
   }
 
   button {
-    @apply ds-h-6 ds-rounded-md ds-border ds-border-solid ds-border-gray-200 ds-px-1 ds-text-xs ds-font-normal ds-text-gray-800 hover:ds-bg-gray-100 #{!important};
+    @apply h-6 rounded-md border border-solid border-gray-200 px-1 text-xs font-normal text-gray-800 hover:bg-gray-100 #{!important};
   }
 }
 </style>

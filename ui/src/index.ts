@@ -1,7 +1,6 @@
 import { definePlugin } from '@halo-dev/console-shared';
 import { markRaw } from 'vue';
 import TablerDatabaseEdit from '~icons/tabler/database-edit';
-import './styles/main.css';
 import DataStudio from './views/DataStudio.vue';
 
 export default definePlugin({

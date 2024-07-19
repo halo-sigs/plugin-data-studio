@@ -48,10 +48,8 @@ async function handleSave() {
 </script>
 
 <template>
-  <div
-    class="ds-sticky ds-top-0 ds-z-10 ds-flex ds-h-12 ds-items-center ds-justify-between ds-border-b ds-bg-white ds-px-4"
-  >
-    <h2 class="ds-font-semibold">{{ data?.metadata?.name }}</h2>
+  <div class="sticky top-0 z-10 h-12 flex items-center justify-between border-b bg-white px-4">
+    <h2 class="font-semibold">{{ data?.metadata?.name }}</h2>
     <VSpace>
       <VButton size="sm" @click="emit('close')">返回</VButton>
       <VButton size="sm" type="secondary" :loading="isSubmitting" @click="handleSave">
@@ -59,7 +57,7 @@ async function handleSave() {
       </VButton>
     </VSpace>
   </div>
-  <div class="ds-p-4">
+  <div class="p-4">
     <DataEditor ref="dataEditorRef" :scheme="scheme" :data="data" />
   </div>
 </template>

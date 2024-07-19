@@ -42,7 +42,7 @@ async function handleSave() {
 </script>
 
 <template>
-  <VModal ref="modal" @close="emit('close')" :width="1240" title="新增数据">
+  <VModal ref="modal" :width="1240" title="新增数据" @close="emit('close')">
     <DataEditor ref="dataEditorRef" :scheme="scheme" />
     <template #footer>
       <VSpace>

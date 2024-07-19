@@ -109,36 +109,32 @@ const { open } = useDataImport(selectedScheme);
   />
   <VPageHeader title="Data Studio">
     <template #icon>
-      <TablerDatabaseEdit class="ds-mr-2 ds-self-center" />
+      <TablerDatabaseEdit class="mr-2 self-center" />
     </template>
   </VPageHeader>
-  <div class="ds-m-0 md:ds-m-4">
-    <VCard style="height: calc(100vh - 5.5rem)" :body-class="['ds-h-full', '!ds-p-0']">
-      <div class="ds-flex ds-h-full ds-divide-x">
-        <div class="ds-w-64 ds-flex-none ds-overflow-auto">
-          <div
-            class="ds-sticky ds-top-0 ds-z-10 ds-flex ds-h-12 ds-items-center ds-border-b ds-bg-white ds-px-4"
-          >
-            <h2 class="ds-font-semibold ds-text-green-900">
-              所有模型（{{ schemes?.length || 0 }}）
-            </h2>
+  <div class="m-0 md:m-4">
+    <VCard style="height: calc(100vh - 5.5rem)" :body-class="['h-full', '!p-0']">
+      <div class="h-full flex divide-x">
+        <div class="w-64 flex-none overflow-auto">
+          <div class="sticky top-0 z-10 h-12 flex items-center border-b bg-white px-4">
+            <h2 class="text-green-900 font-semibold">所有模型（{{ schemes?.length || 0 }}）</h2>
           </div>
-          <ul class="ds-box-border ds-h-full ds-w-full ds-divide-y ds-divide-gray-100" role="list">
+          <ul class="box-border h-full w-full divide-y divide-gray-100" role="list">
             <li
               v-for="scheme in schemes"
               :key="scheme.type"
-              class="ds-relative ds-cursor-pointer"
+              class="relative cursor-pointer"
               @click="selectedSchemeName = scheme.type"
             >
               <div
                 v-show="selectedScheme?.type === scheme.type"
-                class="bg-primary ds-absolute ds-inset-y-0 ds-left-0 ds-w-0.5"
+                class="bg-primary absolute inset-y-0 left-0 w-0.5"
               ></div>
-              <div class="ds-flex ds-flex-col ds-space-y-1.5 ds-px-4 ds-py-2.5 hover:ds-bg-gray-50">
-                <h3 class="ds-text-sm ds-font-medium ds-text-gray-900">
+              <div class="flex flex-col px-4 py-2.5 space-y-1.5 hover:bg-gray-50">
+                <h3 class="text-sm text-gray-900 font-medium">
                   {{ scheme.groupVersionKind.kind }}
                 </h3>
-                <p class="ds-line-clamp-1 ds-text-xs ds-text-gray-600">
+                <p class="line-clamp-1 text-xs text-gray-600">
                   {{
                     [
                       scheme.groupVersionKind.group,
@@ -153,26 +149,23 @@ const { open } = useDataImport(selectedScheme);
             </li>
           </ul>
         </div>
-        <div
-          class="ds-flex ds-flex-1 ds-shrink ds-flex-col"
-          :class="{ 'ds-w-auto ds-flex-none': !!selectedData }"
-        >
+        <div class="flex flex-1 shrink flex-col" :class="{ 'w-auto flex-none': !!selectedData }">
           <div
             v-if="selectedScheme"
-            class="ds-sticky ds-top-0 ds-flex ds-h-12 ds-w-full ds-items-center ds-justify-between ds-border-b ds-px-4"
+            class="sticky top-0 h-12 w-full flex items-center justify-between border-b px-4"
           >
-            <div class="ds-flex ds-items-center ds-gap-4">
-              <h2 class="ds-font-semibold ds-text-green-900">
+            <div class="flex items-center gap-4">
+              <h2 class="text-green-900 font-semibold">
                 {{ selectedScheme?.groupVersionKind?.kind }}
               </h2>
               <input
                 v-model.lazy="keyword"
                 placeholder="输入 metadata.name 筛选"
-                class="ds-text-sm ds-px-0 ds-w-64"
+                class="w-64 px-0 text-sm"
               />
               <IconCloseCircle
                 v-if="keyword"
-                class="text-primary ds-cursor-pointer"
+                class="text-primary cursor-pointer"
                 @click="keyword = ''"
               />
             </div>
@@ -184,29 +177,24 @@ const { open } = useDataImport(selectedScheme);
             </VSpace>
           </div>
           <VLoading v-if="isLoading" />
-          <div
-            v-else-if="!data?.items?.length"
-            class="ds-flex ds-flex-1 ds-shrink ds-justify-center ds-py-10"
-          >
-            <span class="ds-text-sm ds-text-gray-600"> 此模型当前没有数据 </span>
+          <div v-else-if="!data?.items?.length" class="flex flex-1 shrink justify-center py-10">
+            <span class="text-sm text-gray-600"> 此模型当前没有数据 </span>
           </div>
           <ul
             v-else
-            class="ds-box-border ds-h-full ds-w-full ds-flex-1 ds-shrink ds-divide-y ds-divide-gray-100 ds-overflow-auto"
+            class="box-border h-full w-full flex-1 shrink overflow-auto divide-y divide-gray-100"
             role="list"
           >
             <li
               v-for="item in data?.items"
               :key="item.metadata.name"
-              class="ds-cursor-pointer"
+              class="cursor-pointer"
               @click="selectedData = item"
             >
               <DataListItem :scheme="selectedScheme" :data="item" :selected-data="selectedData" />
             </li>
           </ul>
-          <div
-            class="ds-flex ds-h-14 ds-flex-none ds-items-center ds-justify-center ds-border-t ds-bg-white ds-px-4"
-          >
+          <div class="h-14 flex flex-none items-center justify-center border-t bg-white px-4">
             <VPagination
               v-model:page="page"
               v-model:size="size"
@@ -215,10 +203,7 @@ const { open } = useDataImport(selectedScheme);
             />
           </div>
         </div>
-        <div
-          v-if="selectedData && selectedScheme"
-          class="ds-h-full ds-flex-1 ds-shrink ds-overflow-auto"
-        >
+        <div v-if="selectedData && selectedScheme" class="h-full flex-1 shrink overflow-auto">
           <DataUpdateSection
             :scheme="selectedScheme"
             :data="selectedData"

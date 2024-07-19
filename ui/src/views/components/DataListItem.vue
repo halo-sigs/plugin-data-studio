@@ -61,8 +61,8 @@ function handleDelete() {
     <template #start>
       <VEntityField :title="data.metadata.name">
         <template #description>
-          <div class="ds-rounded-md ds-bg-gray-50 ds-p-1">
-            <code class="ds-line-clamp-3 ds-break-all ds-text-xs ds-text-gray-600">
+          <div class="rounded-md bg-gray-50 p-1">
+            <code class="line-clamp-3 break-all text-xs text-gray-600">
               {{ data }}
             </code>
           </div>
