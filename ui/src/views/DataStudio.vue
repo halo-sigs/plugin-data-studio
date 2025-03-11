@@ -11,8 +11,9 @@ import {
   VPageHeader,
   VPagination,
   VSpace,
+  Toast,
 } from '@halo-dev/components';
-import { useQuery } from '@tanstack/vue-query';
+import { useQuery, useQueryClient } from '@tanstack/vue-query';
 import { useRouteQuery } from '@vueuse/router';
 import { computed, ref, watch } from 'vue';
 import TablerDatabaseEdit from '~icons/tabler/database-edit';
@@ -20,6 +21,10 @@ import DataCreationModal from './components/DataCreationModal.vue';
 import DataListItem from './components/DataListItem.vue';
 import DataUpdateSection from './components/DataUpdateSection.vue';
 import { useDataImport } from './composables/use-data-import';
+import DataBatchImportModal from './components/DataBatchImportModal.vue';
+import DeleteConfirmModal from './components/DeleteConfirmModal.vue';
+
+const queryClient = useQueryClient();
 
 const { data: schemes } = useQuery({
   queryKey: ['plugin-data-studio:schemes'],
@@ -95,9 +100,85 @@ watch(
 );
 
 const creationModalVisible = ref();
+const batchImportModalVisible = ref(false);
+const deleteModalVisible = ref(false);
+const isDeleting = ref(false);
 
 // Import data
 const { open } = useDataImport(selectedScheme);
+
+const selectedItems = ref<Set<string>>(new Set());
+const isSelectAll = computed(() => {
+  return data.value?.items?.length === selectedItems.value.size;
+});
+
+const handleSelectAll = () => {
+  if (isSelectAll.value) {
+    selectedItems.value.clear();
+  } else {
+    data.value?.items.forEach((item) => {
+      selectedItems.value.add(item.metadata.name);
+    });
+  }
+};
+
+const handleSelect = (item: any) => {
+  if (selectedItems.value.has(item.metadata.name)) {
+    selectedItems.value.delete(item.metadata.name);
+  } else {
+    selectedItems.value.add(item.metadata.name);
+  }
+};
+
+const handleBatchExport = async () => {
+  const selectedData = data.value?.items.filter((item) => 
+    selectedItems.value.has(item.metadata.name)
+  );
+  
+  if (!selectedData?.length) return;
+  
+  const exportData = JSON.stringify(selectedData, null, 2);
+  const blob = new Blob([exportData], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${selectedScheme.value?.groupVersionKind?.kind}-batch-export.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+const handleBatchDelete = async () => {
+  try {
+    isDeleting.value = true;
+    const selectedData = data.value?.items.filter((item) => 
+      selectedItems.value.has(item.metadata.name)
+    );
+
+    if (!selectedData?.length) return;
+
+    const deletePromises = selectedData.map((item) => 
+      axiosInstance.delete(`${buildBaseApiUrl(selectedScheme.value)}/${item.metadata.name}`)
+    );
+
+    await Promise.all(deletePromises);
+    
+    Toast.success('删除成功');
+    queryClient.invalidateQueries({ queryKey: ['plugin-data-studio:data'] });
+    selectedItems.value.clear();
+    deleteModalVisible.value = false;
+  } catch (error) {
+    Toast.error('删除失败');
+  } finally {
+    isDeleting.value = false;
+  }
+};
+
+// 监听路由变化时清空选中状态
+watch([() => selectedScheme.value, () => data.value], () => {
+  selectedItems.value.clear();
+});
 </script>
 
 <template>
@@ -106,6 +187,18 @@ const { open } = useDataImport(selectedScheme);
     v-if="creationModalVisible"
     :scheme="selectedScheme"
     @close="creationModalVisible = false"
+  />
+  <DataBatchImportModal
+    v-if="batchImportModalVisible"
+    :scheme="selectedScheme"
+    @close="batchImportModalVisible = false"
+  />
+  <DeleteConfirmModal
+    :visible="deleteModalVisible"
+    :loading="isDeleting"
+    :description="`确定要删除选中的 ${selectedItems.size} 条数据吗？此操作不可恢复。`"
+    @close="deleteModalVisible = false"
+    @confirm="handleBatchDelete"
   />
   <VPageHeader title="Data Studio">
     <template #icon>
@@ -170,6 +263,22 @@ const { open } = useDataImport(selectedScheme);
               />
             </div>
             <VSpace>
+              <VButton 
+                v-if="selectedItems.size > 0"
+                size="sm"
+                type="danger"
+                @click="deleteModalVisible = true"
+              >
+                批量删除 ({{ selectedItems.size }})
+              </VButton>
+              <VButton 
+                v-if="selectedItems.size > 0"
+                size="sm"
+                @click="handleBatchExport"
+              >
+                批量导出 ({{ selectedItems.size }})
+              </VButton>
+              <VButton size="sm" @click="batchImportModalVisible = true">批量导入</VButton>
               <VButton size="sm" @click="open">导入</VButton>
               <VButton size="sm" type="secondary" @click="creationModalVisible = true">
                 新增
@@ -185,13 +294,30 @@ const { open } = useDataImport(selectedScheme);
             class="box-border h-full w-full flex-1 shrink overflow-auto divide-y divide-gray-100"
             role="list"
           >
+            <li class="px-4 py-2 bg-gray-50 flex items-center">
+              <input
+                type="checkbox"
+                :checked="isSelectAll"
+                @change="handleSelectAll"
+                class="mr-2"
+              />
+              <span class="text-sm text-gray-600">全选</span>
+            </li>
             <li
               v-for="item in data?.items"
               :key="item.metadata.name"
-              class="cursor-pointer"
-              @click="selectedData = item"
+              class="cursor-pointer flex items-center px-4"
             >
-              <DataListItem :scheme="selectedScheme" :data="item" :selected-data="selectedData" />
+              <input
+                type="checkbox"
+                :checked="selectedItems.has(item.metadata.name)"
+                @change="() => handleSelect(item)"
+                class="mr-2"
+                @click.stop
+              />
+              <div class="flex-1" @click="selectedData = item">
+                <DataListItem :scheme="selectedScheme" :data="item" :selected-data="selectedData" />
+              </div>
             </li>
           </ul>
           <div class="h-14 flex flex-none items-center justify-center border-t bg-white px-4">
