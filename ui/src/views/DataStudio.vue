@@ -1,28 +1,28 @@
 <script setup lang="ts">
 import WarningModal from '@/components/WarningModal.vue';
-import type { ListResponse, Unstructured } from '@/types';
-import { buildBaseApiUrl } from '@/utils/api';
-import { axiosInstance } from '@halo-dev/api-client';
+import type {ListResponse, Unstructured} from '@/types';
+import {buildBaseApiUrl} from '@/utils/api';
+import {axiosInstance} from '@halo-dev/api-client';
 import {
+  Dialog,
   IconCloseCircle,
+  Toast,
   VButton,
   VCard,
   VLoading,
   VPageHeader,
   VPagination,
   VSpace,
-  Toast,
 } from '@halo-dev/components';
-import { useQuery, useQueryClient } from '@tanstack/vue-query';
-import { useRouteQuery } from '@vueuse/router';
-import { computed, ref, watch } from 'vue';
+import {useQuery, useQueryClient} from '@tanstack/vue-query';
+import {useRouteQuery} from '@vueuse/router';
+import {computed, ref, watch} from 'vue';
 import TablerDatabaseEdit from '~icons/tabler/database-edit';
 import DataCreationModal from './components/DataCreationModal.vue';
 import DataListItem from './components/DataListItem.vue';
 import DataUpdateSection from './components/DataUpdateSection.vue';
-import { useDataImport } from './composables/use-data-import';
+import {useDataImport} from './composables/use-data-import';
 import DataBatchImportModal from './components/DataBatchImportModal.vue';
-import DeleteConfirmModal from './components/DeleteConfirmModal.vue';
 
 const queryClient = useQueryClient();
 
@@ -149,21 +149,32 @@ const handleBatchExport = async () => {
   URL.revokeObjectURL(url);
 };
 
+function handleDelete() {
+  Dialog.warning({
+    title: '删除数据',
+    description: '请确认是否删除该数据，删除后无法恢复',
+    confirmType: 'danger',
+    async onConfirm() {
+      await handleBatchDelete();
+    },
+  });
+}
+
 const handleBatchDelete = async () => {
   try {
     isDeleting.value = true;
-    const selectedData = data.value?.items.filter((item) => 
+    const selectedData = data.value?.items.filter((item) =>
       selectedItems.value.has(item.metadata.name)
     );
 
     if (!selectedData?.length) return;
 
-    const deletePromises = selectedData.map((item) => 
+    const deletePromises = selectedData.map((item) =>
       axiosInstance.delete(`${buildBaseApiUrl(selectedScheme.value)}/${item.metadata.name}`)
     );
 
     await Promise.all(deletePromises);
-    
+
     Toast.success('删除成功');
     queryClient.invalidateQueries({ queryKey: ['plugin-data-studio:data'] });
     selectedItems.value.clear();
@@ -192,13 +203,6 @@ watch([() => selectedScheme.value, () => data.value], () => {
     v-if="batchImportModalVisible"
     :scheme="selectedScheme"
     @close="batchImportModalVisible = false"
-  />
-  <DeleteConfirmModal
-    :visible="deleteModalVisible"
-    :loading="isDeleting"
-    :description="`确定要删除选中的 ${selectedItems.size} 条数据吗？此操作不可恢复。`"
-    @close="deleteModalVisible = false"
-    @confirm="handleBatchDelete"
   />
   <VPageHeader title="Data Studio">
     <template #icon>
@@ -267,7 +271,7 @@ watch([() => selectedScheme.value, () => data.value], () => {
                 v-if="selectedItems.size > 0"
                 size="sm"
                 type="danger"
-                @click="deleteModalVisible = true"
+                @click="handleDelete"
               >
                 批量删除 ({{ selectedItems.size }})
               </VButton>
