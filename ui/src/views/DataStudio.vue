@@ -1,27 +1,28 @@
 <script setup lang="ts">
 import WarningModal from '@/components/WarningModal.vue';
-import type {ListResponse, Unstructured} from '@/types';
-import {buildBaseApiUrl} from '@/utils/api';
-import {axiosInstance} from '@halo-dev/api-client';
+import type { ListResponse, Unstructured } from '@/types';
+import { buildBaseApiUrl } from '@/utils/api';
+import { axiosInstance } from '@halo-dev/api-client';
 import {
   Dialog,
   IconCloseCircle,
   Toast,
   VButton,
   VCard,
+  VEntityContainer,
   VLoading,
   VPageHeader,
   VPagination,
   VSpace,
 } from '@halo-dev/components';
-import {useQuery, useQueryClient} from '@tanstack/vue-query';
-import {useRouteQuery} from '@vueuse/router';
-import {computed, ref, watch} from 'vue';
+import { useQuery, useQueryClient } from '@tanstack/vue-query';
+import { useRouteQuery } from '@vueuse/router';
+import { computed, ref, watch } from 'vue';
 import TablerDatabaseEdit from '~icons/tabler/database-edit';
 import DataCreationModal from './components/DataCreationModal.vue';
 import DataListItem from './components/DataListItem.vue';
 import DataUpdateSection from './components/DataUpdateSection.vue';
-import {useDataImport} from './composables/use-data-import';
+import { useDataImport } from './composables/use-data-import';
 import DataBatchImportModal from './components/DataBatchImportModal.vue';
 
 const queryClient = useQueryClient();
@@ -131,12 +132,12 @@ const handleSelect = (item: any) => {
 };
 
 const handleBatchExport = async () => {
-  const selectedData = data.value?.items.filter((item) => 
+  const selectedData = data.value?.items.filter((item) =>
     selectedItems.value.has(item.metadata.name)
   );
-  
+
   if (!selectedData?.length) return;
-  
+
   const exportData = JSON.stringify(selectedData, null, 2);
   const blob = new Blob([exportData], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -267,19 +268,10 @@ watch([() => selectedScheme.value, () => data.value], () => {
               />
             </div>
             <VSpace>
-              <VButton 
-                v-if="selectedItems.size > 0"
-                size="sm"
-                type="danger"
-                @click="handleDelete"
-              >
+              <VButton v-if="selectedItems.size > 0" size="sm" type="danger" @click="handleDelete">
                 批量删除 ({{ selectedItems.size }})
               </VButton>
-              <VButton 
-                v-if="selectedItems.size > 0"
-                size="sm"
-                @click="handleBatchExport"
-              >
+              <VButton v-if="selectedItems.size > 0" size="sm" @click="handleBatchExport">
                 批量导出 ({{ selectedItems.size }})
               </VButton>
               <VButton size="sm" @click="batchImportModalVisible = true">批量导入</VButton>
@@ -293,12 +285,8 @@ watch([() => selectedScheme.value, () => data.value], () => {
           <div v-else-if="!data?.items?.length" class="flex flex-1 shrink justify-center py-10">
             <span class="text-sm text-gray-600"> 此模型当前没有数据 </span>
           </div>
-          <ul
-            v-else
-            class="box-border h-full w-full flex-1 shrink overflow-auto divide-y divide-gray-100"
-            role="list"
-          >
-            <li class="px-4 py-2 bg-gray-50 flex items-center">
+          <div v-else class="box-border h-full w-full flex-1 shrink overflow-auto">
+            <div class="px-4 py-2 bg-gray-50 flex items-center sticky top-0 z-10">
               <input
                 type="checkbox"
                 :checked="isSelectAll"
@@ -306,24 +294,28 @@ watch([() => selectedScheme.value, () => data.value], () => {
                 class="mr-2"
               />
               <span class="text-sm text-gray-600">全选</span>
-            </li>
-            <li
-              v-for="item in data?.items"
-              :key="item.metadata.name"
-              class="cursor-pointer flex items-center px-4"
-            >
-              <input
-                type="checkbox"
-                :checked="selectedItems.has(item.metadata.name)"
-                @change="() => handleSelect(item)"
-                class="mr-2"
-                @click.stop
-              />
-              <div class="flex-1" @click="selectedData = item">
-                <DataListItem :scheme="selectedScheme" :data="item" :selected-data="selectedData" />
-              </div>
-            </li>
-          </ul>
+            </div>
+            <VEntityContainer>
+              <DataListItem
+                v-for="item in data?.items"
+                :key="item.metadata.name"
+                :scheme="selectedScheme"
+                :data="item"
+                :selected-data="selectedData"
+                @click="selectedData = item"
+              >
+                <template #checkbox>
+                  <input
+                    type="checkbox"
+                    :checked="selectedItems.has(item.metadata.name)"
+                    @change="() => handleSelect(item)"
+                    class="mr-2"
+                    @click.stop
+                  />
+                </template>
+              </DataListItem>
+            </VEntityContainer>
+          </div>
           <div class="h-14 flex flex-none items-center justify-center border-t bg-white px-4">
             <VPagination
               v-model:page="page"
