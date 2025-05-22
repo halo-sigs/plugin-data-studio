@@ -84,7 +84,7 @@ const handleBatchDelete = async () => {
             :key="index"
             class="text-sm p-2 mb-1 rounded"
             :class="{
-              'bg-green-50 text-green-700': result.status === 'success',
+              'bg-gray-50 text-gray-700': result.status === 'success',
               'bg-red-50 text-red-700': result.status === 'error'
             }"
           >

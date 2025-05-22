@@ -215,7 +215,7 @@ watch([() => selectedScheme.value, () => data.value], () => {
       <div class="h-full flex divide-x">
         <div class="w-64 flex-none overflow-auto">
           <div class="sticky top-0 z-10 h-12 flex items-center border-b bg-white px-4">
-            <h2 class="text-green-900 font-semibold">所有模型（{{ schemes?.length || 0 }}）</h2>
+            <h2 class="text-gray-900 font-semibold">所有模型（{{ schemes?.length || 0 }}）</h2>
           </div>
           <ul class="box-border h-full w-full divide-y divide-gray-100" role="list">
             <li
@@ -253,7 +253,7 @@ watch([() => selectedScheme.value, () => data.value], () => {
             class="sticky top-0 h-12 w-full flex items-center justify-between border-b px-4"
           >
             <div class="flex items-center gap-4">
-              <h2 class="text-green-900 font-semibold">
+              <h2 class="text-gray-900 font-semibold">
                 {{ selectedScheme?.groupVersionKind?.kind }}
               </h2>
               <input

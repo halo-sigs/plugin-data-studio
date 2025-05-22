@@ -22,7 +22,9 @@ const modal = ref<InstanceType<typeof VModal> | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 const isSubmitting = ref(false);
 const selectedFiles = ref<File[]>([]);
-const importResults = ref<Array<{ name: string; status: 'success' | 'error'; message?: string }>>([]);
+const importResults = ref<Array<{ name: string; status: 'success' | 'error'; message?: string }>>(
+  []
+);
 
 const handleFileSelect = (event: Event) => {
   const files = (event.target as HTMLInputElement).files;
@@ -45,22 +47,22 @@ const handleBatchImport = async () => {
       try {
         const content = await file.text();
         const data = JSON.parse(content);
-        
+
         // 处理单个文件或多条数据的情况
         const dataArray = Array.isArray(data) ? data : [data];
-        
+
         for (const item of dataArray) {
           try {
             await axiosInstance.post(buildBaseApiUrl(props.scheme), item);
             importResults.value.push({
               name: item.metadata?.name || file.name,
-              status: 'success'
+              status: 'success',
             });
           } catch (error: any) {
             importResults.value.push({
               name: item.metadata?.name || file.name,
               status: 'error',
-              message: error.response?.data?.message || '导入失败'
+              message: error.response?.data?.message || '导入失败',
             });
           }
         }
@@ -68,13 +70,13 @@ const handleBatchImport = async () => {
         importResults.value.push({
           name: file.name,
           status: 'error',
-          message: '文件格式错误'
+          message: '文件格式错误',
         });
       }
     }
 
-    const successCount = importResults.value.filter(r => r.status === 'success').length;
-    const errorCount = importResults.value.filter(r => r.status === 'error').length;
+    const successCount = importResults.value.filter((r) => r.status === 'success').length;
+    const errorCount = importResults.value.filter((r) => r.status === 'error').length;
 
     if (errorCount === 0) {
       Toast.success(`成功导入 ${successCount} 条数据`);
@@ -109,7 +111,9 @@ const resetForm = () => {
           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
           @change="handleFileSelect"
         />
-        <p class="mt-2 text-sm text-gray-500">支持选择多个 JSON 文件，或包含多条数据的单个 JSON 文件</p>
+        <p class="mt-2 text-sm text-gray-500">
+          支持选择多个 JSON 文件，或包含多条数据的单个 JSON 文件
+        </p>
       </div>
 
       <div v-if="importResults.length > 0" class="mt-4">
@@ -120,8 +124,8 @@ const resetForm = () => {
             :key="index"
             class="text-sm p-2 mb-1 rounded"
             :class="{
-              'bg-green-50 text-green-700': result.status === 'success',
-              'bg-red-50 text-red-700': result.status === 'error'
+              'bg-gray-50 text-gray-700': result.status === 'success',
+              'bg-red-50 text-red-700': result.status === 'error',
             }"
           >
             <div class="flex items-center justify-between">
@@ -148,4 +152,4 @@ const resetForm = () => {
       </VSpace>
     </template>
   </VModal>
-</template> 
+</template>
