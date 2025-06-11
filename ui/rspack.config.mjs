@@ -32,7 +32,7 @@ export default defineConfig({
   },
   output: {
     publicPath: '/plugins/data-studio/assets/console/',
-    chunkFilename: '[id].js',
+    chunkFilename: '[id]-[hash:8].js',
     cssFilename: 'style.css',
     path: path.resolve(outDir),
     library: {
@@ -50,6 +50,7 @@ export default defineConfig({
   experiments: {
     css: true,
   },
+  devtool: false,
   module: {
     rules: [
       {
