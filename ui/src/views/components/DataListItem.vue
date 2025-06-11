@@ -57,15 +57,15 @@ function handleDelete() {
 </script>
 
 <template>
-  <VEntity class="cursor-pointer" :is-selected="data.metadata.name === selectedData?.metadata.name">
+  <VEntity class=":uno: cursor-pointer" :is-selected="data.metadata.name === selectedData?.metadata.name">
     <template #checkbox>
       <slot name="checkbox" />
     </template>
     <template #start>
       <VEntityField :title="data.metadata.name">
         <template #description>
-          <div class="rounded-md bg-gray-50 p-1">
-            <code class="line-clamp-3 break-all text-xs text-gray-600">
+          <div class=":uno: rounded-md bg-gray-50 p-1">
+            <code class=":uno: line-clamp-3 break-all text-xs text-gray-600">
               {{ data }}
             </code>
           </div>

@@ -10,12 +10,10 @@ const props = withDefaults(
     data?: Unstructured;
     scheme: Scheme;
   }>(),
-  {}
+  {
+    data: undefined,
+  }
 );
-
-const emit = defineEmits<{
-  (event: 'close'): void;
-}>();
 
 const editor = shallowRef();
 
@@ -63,61 +61,3 @@ defineExpose({
 <template>
   <div id="jsonEditorContainer"></div>
 </template>
-
-<style lang="scss">
-#jsonEditorContainer {
-  .row {
-    @apply py-1.5;
-  }
-  .je-object__controls {
-    @apply space-x-1.5;
-  }
-
-  .je-form-input-label {
-    @apply text-sm;
-  }
-
-  .je-modal {
-    button {
-      @apply m-1;
-    }
-
-    .je-edit-json--textarea {
-      @apply w-96 border-b border-solid border-gray-100;
-    }
-  }
-
-  .form-control {
-    @apply space-y-1.5 py-1.5;
-
-    input,
-    select {
-      @apply h-9 w-1/2 rounded-md border border-solid border-gray-200 text-sm text-gray-800 focus:ring-1 #{!important};
-    }
-  }
-
-  .je-indented-panel {
-    @apply m-0 mb-2 mt-3 rounded-md p-3 #{!important};
-  }
-
-  .je-header {
-    span {
-      @apply text-sm font-bold;
-    }
-
-    button {
-      span {
-        @apply text-xs font-normal;
-      }
-    }
-  }
-
-  p {
-    @apply py-1 text-xs font-normal text-gray-600 #{!important};
-  }
-
-  button {
-    @apply h-6 rounded-md border border-solid border-gray-200 px-1 text-xs font-normal text-gray-800 hover:bg-gray-100 #{!important};
-  }
-}
-</style>

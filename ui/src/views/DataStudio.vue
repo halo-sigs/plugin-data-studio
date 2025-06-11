@@ -207,32 +207,34 @@ watch([() => selectedScheme.value, () => data.value], () => {
   />
   <VPageHeader title="Data Studio">
     <template #icon>
-      <TablerDatabaseEdit class="mr-2 self-center" />
+      <TablerDatabaseEdit class=":uno: mr-2 self-center" />
     </template>
   </VPageHeader>
-  <div class="m-0 md:m-4">
-    <VCard style="height: calc(100vh - 5.5rem)" :body-class="['h-full', '!p-0']">
-      <div class="h-full flex divide-x">
-        <div class="w-64 flex-none overflow-auto">
-          <div class="sticky top-0 z-10 h-12 flex items-center border-b bg-white px-4">
-            <h2 class="text-gray-900 font-semibold">所有模型（{{ schemes?.length || 0 }}）</h2>
+  <div class=":uno: m-0 md:m-4">
+    <VCard style="height: calc(100vh - 5.5rem)" :body-class="['data-studio-card-body']">
+      <div class=":uno: h-full flex divide-x">
+        <div class=":uno: w-64 flex-none overflow-auto">
+          <div class=":uno: sticky top-0 z-10 h-12 flex items-center border-b bg-white px-4">
+            <h2 class=":uno: text-gray-900 font-semibold">
+              所有模型（{{ schemes?.length || 0 }}）
+            </h2>
           </div>
-          <ul class="box-border h-full w-full divide-y divide-gray-100" role="list">
+          <ul class=":uno: box-border h-full w-full divide-y divide-gray-100" role="list">
             <li
               v-for="scheme in schemes"
               :key="scheme.type"
-              class="relative cursor-pointer"
+              class=":uno: relative cursor-pointer"
               @click="selectedSchemeName = scheme.type"
             >
               <div
                 v-show="selectedScheme?.type === scheme.type"
-                class="bg-primary absolute inset-y-0 left-0 w-0.5"
+                class=":uno: bg-primary absolute inset-y-0 left-0 w-0.5"
               ></div>
-              <div class="flex flex-col px-4 py-2.5 space-y-1.5 hover:bg-gray-50">
-                <h3 class="text-sm text-gray-900 font-medium">
+              <div class=":uno: flex flex-col px-4 py-2.5 space-y-1.5 hover:bg-gray-50">
+                <h3 class=":uno: text-sm text-gray-900 font-medium">
                   {{ scheme.groupVersionKind.kind }}
                 </h3>
-                <p class="line-clamp-1 text-xs text-gray-600">
+                <p class=":uno: line-clamp-1 text-xs text-gray-600">
                   {{
                     [
                       scheme.groupVersionKind.group,
@@ -247,23 +249,26 @@ watch([() => selectedScheme.value, () => data.value], () => {
             </li>
           </ul>
         </div>
-        <div class="flex flex-1 shrink flex-col" :class="{ 'w-auto flex-none': !!selectedData }">
+        <div
+          class=":uno: flex flex-1 shrink flex-col"
+          :class="{':uno: w-auto flex-none': !!selectedData }"
+        >
           <div
             v-if="selectedScheme"
-            class="sticky top-0 h-12 w-full flex items-center justify-between border-b px-4"
+            class=":uno: sticky top-0 h-12 w-full flex items-center justify-between border-b px-4"
           >
-            <div class="flex items-center gap-4">
-              <h2 class="text-gray-900 font-semibold">
+            <div class=":uno: flex items-center gap-4">
+              <h2 class=":uno: text-gray-900 font-semibold">
                 {{ selectedScheme?.groupVersionKind?.kind }}
               </h2>
               <input
                 v-model.lazy="keyword"
                 placeholder="输入 metadata.name 筛选"
-                class="w-64 px-0 text-sm"
+                class=":uno: w-64 px-0 text-sm"
               />
               <IconCloseCircle
                 v-if="keyword"
-                class="text-primary cursor-pointer"
+                class=":uno: text-primary cursor-pointer"
                 @click="keyword = ''"
               />
             </div>
@@ -282,18 +287,21 @@ watch([() => selectedScheme.value, () => data.value], () => {
             </VSpace>
           </div>
           <VLoading v-if="isLoading" />
-          <div v-else-if="!data?.items?.length" class="flex flex-1 shrink justify-center py-10">
-            <span class="text-sm text-gray-600"> 此模型当前没有数据 </span>
+          <div
+            v-else-if="!data?.items?.length"
+            class=":uno: flex flex-1 shrink justify-center py-10"
+          >
+            <span class=":uno: text-sm text-gray-600"> 此模型当前没有数据 </span>
           </div>
-          <div v-else class="box-border h-full w-full flex-1 shrink overflow-auto">
-            <div class="px-4 py-2 bg-gray-50 flex items-center sticky top-0 z-10">
+          <div v-else class=":uno: box-border h-full w-full flex-1 shrink overflow-auto">
+            <div class=":uno: px-4 py-2 bg-gray-50 flex items-center sticky top-0 z-10">
               <input
                 type="checkbox"
                 :checked="isSelectAll"
                 @change="handleSelectAll"
-                class="mr-2"
+                class=":uno: mr-2"
               />
-              <span class="text-sm text-gray-600">全选</span>
+              <span class=":uno: text-sm text-gray-600">全选</span>
             </div>
             <VEntityContainer>
               <DataListItem
@@ -309,14 +317,14 @@ watch([() => selectedScheme.value, () => data.value], () => {
                     type="checkbox"
                     :checked="selectedItems.has(item.metadata.name)"
                     @change="() => handleSelect(item)"
-                    class="mr-2"
+                    class=":uno: mr-2"
                     @click.stop
                   />
                 </template>
               </DataListItem>
             </VEntityContainer>
           </div>
-          <div class="h-14 flex flex-none items-center justify-center border-t bg-white px-4">
+          <div class=":uno: h-14 flex flex-none items-center justify-center border-t bg-white px-4">
             <VPagination
               v-model:page="page"
               v-model:size="size"
@@ -325,7 +333,7 @@ watch([() => selectedScheme.value, () => data.value], () => {
             />
           </div>
         </div>
-        <div v-if="selectedData && selectedScheme" class="h-full flex-1 shrink overflow-auto">
+        <div v-if="selectedData && selectedScheme" class=":uno: h-full flex-1 shrink overflow-auto">
           <DataUpdateSection
             :scheme="selectedScheme"
             :data="selectedData"

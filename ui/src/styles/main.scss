@@ -1,0 +1,110 @@
+
+#jsonEditorContainer {
+  .row {
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+  }
+
+  .je-object__controls {
+    > * + * {
+      margin-left: 0.375rem;
+    }
+  }
+
+  .je-form-input-label {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  .je-modal {
+    button {
+      margin: 0.25rem;
+    }
+
+    .je-edit-json--textarea {
+      width: 24rem;
+      border-bottom: 1px solid rgb(243, 244, 246);
+    }
+  }
+
+  .form-control {
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+    > * + * {
+      margin-top: 0.375rem;
+    }
+
+    input,
+    select {
+      height: 2.25rem;
+      width: 50%;
+      border-radius: 0.375rem;
+      border: 1px solid rgb(229, 231, 235);
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+      color: rgb(31, 41, 55);
+
+      &:focus {
+        box-shadow: 0 0 0 1px rgb(59, 130, 246);
+      }
+
+      &:focus {
+        box-shadow: 0 0 0 1px rgb(59, 130, 246) !important;
+      }
+    }
+  }
+
+  .je-indented-panel {
+    margin: 0 !important;
+    margin-bottom: 0.5rem !important;
+    margin-top: 0.75rem !important;
+    border-radius: 0.375rem !important;
+    padding: 0.75rem !important;
+  }
+
+  .je-header {
+    span {
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+      font-weight: 700;
+    }
+
+    button {
+      span {
+        font-size: 0.75rem;
+        line-height: 1rem;
+        font-weight: 400;
+      }
+    }
+  }
+
+  p {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+    font-weight: 400 !important;
+    color: rgb(75, 85, 99) !important;
+  }
+
+  button {
+    height: 1.5rem !important;
+    border-radius: 0.375rem !important;
+    border: 1px solid rgb(229, 231, 235) !important;
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+    font-weight: 400 !important;
+    color: rgb(31, 41, 55) !important;
+
+    &:hover {
+      background-color: rgb(243, 244, 246) !important;
+    }
+  }
+}
+
+.data-studio-card-body {
+  height: 100% !important;
+  padding: 0 !important;
+}

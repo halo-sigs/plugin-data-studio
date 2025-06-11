@@ -1,11 +1,15 @@
 <script lang="ts" setup>
-import DataEditor from '@/components/DataEditor.vue';
 import type { Scheme } from '@/types';
 import { buildBaseApiUrl } from '@/utils/api';
 import { axiosInstance } from '@halo-dev/api-client';
-import { Toast, VButton, VModal, VSpace } from '@halo-dev/components';
+import { Toast, VButton, VLoading, VModal, VSpace } from '@halo-dev/components';
 import { useQueryClient } from '@tanstack/vue-query';
-import { ref } from 'vue';
+import { defineAsyncComponent, ref } from 'vue';
+
+const DataEditor = defineAsyncComponent({
+  loader: () => import('@/components/DataEditor.vue'),
+  loadingComponent: VLoading,
+});
 
 const queryClient = useQueryClient();
 

@@ -1,11 +1,15 @@
 <script lang="ts" setup>
-import DataEditor from '@/components/DataEditor.vue';
 import type { Scheme, Unstructured } from '@/types';
 import { buildBaseApiUrl } from '@/utils/api';
 import { axiosInstance } from '@halo-dev/api-client';
-import { Toast, VButton, VSpace } from '@halo-dev/components';
+import { Toast, VButton, VLoading, VSpace } from '@halo-dev/components';
 import { useQueryClient } from '@tanstack/vue-query';
-import { ref } from 'vue';
+import { defineAsyncComponent, ref } from 'vue';
+
+const DataEditor = defineAsyncComponent({
+  loader: () => import('@/components/DataEditor.vue'),
+  loadingComponent: VLoading,
+});
 
 const queryClient = useQueryClient();
 
@@ -48,8 +52,8 @@ async function handleSave() {
 </script>
 
 <template>
-  <div class="sticky top-0 z-10 h-12 flex items-center justify-between border-b bg-white px-4">
-    <h2 class="font-semibold">{{ data?.metadata?.name }}</h2>
+  <div class=":uno: sticky top-0 z-10 h-12 flex items-center justify-between border-b bg-white px-4">
+    <h2 class=":uno: font-semibold">{{ data?.metadata?.name }}</h2>
     <VSpace>
       <VButton size="sm" @click="emit('close')">返回</VButton>
       <VButton size="sm" type="secondary" :loading="isSubmitting" @click="handleSave">
@@ -57,7 +61,7 @@ async function handleSave() {
       </VButton>
     </VSpace>
   </div>
-  <div class="p-4">
+  <div class=":uno: p-4">
     <DataEditor ref="dataEditorRef" :scheme="scheme" :data="data" />
   </div>
 </template>

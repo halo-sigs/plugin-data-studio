@@ -29,7 +29,7 @@ const handleSkip = () => {
 <template>
   <VModal v-if="warningModalVisible" ref="modal" title="警告" :width="520" @close="emit('close')">
     <div>
-      <span class="text-sm font-semibold">
+      <span class=":uno: text-sm font-semibold">
         此功能拥有极高的数据操作灵活度，在进行操作之前请务必熟悉 Halo
         的运行机制，避免造成数据异常或者不完整。在进行某些数据修改前也请尽可能提前备份数据。
       </span>
@@ -37,15 +37,15 @@ const handleSkip = () => {
       <br />
       <br />
 
-      <span class="text-sm font-semibold">相关资料：</span>
+      <span class=":uno: text-sm font-semibold">相关资料：</span>
 
       <br />
 
-      <ul class="mt-1 text-sm space-y-1">
+      <ul class=":uno: mt-1 text-sm space-y-1">
         <li>
           1.
           <a
-            class="text-indigo-600"
+            class=":uno: text-indigo-600"
             href="https://github.com/halo-dev/rfcs/tree/main/extension"
             target="_blank"
             >自定义模型设计</a
@@ -54,7 +54,7 @@ const handleSkip = () => {
         <li>
           2.
           <a
-            class="text-indigo-600"
+            class=":uno: text-indigo-600"
             href="https://docs.halo.run/developer-guide/plugin/basics/framework"
             target="_blank"
             >Halo 架构概览
@@ -63,7 +63,7 @@ const handleSkip = () => {
       </ul>
     </div>
     <template #footer>
-      <div class="flex justify-between">
+      <div class=":uno: flex justify-between">
         <VSpace>
           <VButton type="danger" @click="modal?.close()">我已确认</VButton>
           <VButton @click="$router.back()">关闭</VButton>

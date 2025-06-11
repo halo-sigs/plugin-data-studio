@@ -101,38 +101,38 @@ const resetForm = () => {
 
 <template>
   <VModal ref="modal" title="批量导入数据" @close="emit('close')">
-    <div class="p-4">
-      <div class="mb-4">
+    <div class=":uno: p-4">
+      <div class=":uno: mb-4">
         <input
           ref="fileInput"
           type="file"
           multiple
           accept=".json"
-          class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+          class=":uno: block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
           @change="handleFileSelect"
         />
-        <p class="mt-2 text-sm text-gray-500">
+        <p class=":uno: mt-2 text-sm text-gray-500">
           支持选择多个 JSON 文件，或包含多条数据的单个 JSON 文件
         </p>
       </div>
 
-      <div v-if="importResults.length > 0" class="mt-4">
-        <h3 class="text-sm font-medium mb-2">导入结果：</h3>
-        <div class="max-h-60 overflow-y-auto">
+      <div v-if="importResults.length > 0" class=":uno: mt-4">
+        <h3 class=":uno: text-sm font-medium mb-2">导入结果：</h3>
+        <div class=":uno: max-h-60 overflow-y-auto">
           <div
             v-for="(result, index) in importResults"
             :key="index"
-            class="text-sm p-2 mb-1 rounded"
-            :class="{
-              'bg-gray-50 text-gray-700': result.status === 'success',
-              'bg-red-50 text-red-700': result.status === 'error',
+            class=":uno: text-sm p-2 mb-1 rounded"
+            :class=" {
+              ':uno: bg-gray-50 text-gray-700': result.status === 'success',
+              ':uno: bg-red-50 text-red-700': result.status === 'error',
             }"
           >
-            <div class="flex items-center justify-between">
+            <div class=":uno: flex items-center justify-between">
               <span>{{ result.name }}</span>
               <span>{{ result.status === 'success' ? '成功' : '失败' }}</span>
             </div>
-            <div v-if="result.message" class="text-xs mt-1">{{ result.message }}</div>
+            <div v-if="result.message" class=":uno: text-xs mt-1">{{ result.message }}</div>
           </div>
         </div>
       </div>
