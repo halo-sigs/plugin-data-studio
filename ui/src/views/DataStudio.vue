@@ -207,7 +207,7 @@ watch([() => selectedScheme.value, () => data.value], () => {
   />
   <VPageHeader title="Data Studio">
     <template #icon>
-      <TablerDatabaseEdit class=":uno: mr-2 self-center" />
+      <TablerDatabaseEdit />
     </template>
   </VPageHeader>
   <div class=":uno: m-0 md:m-4">
@@ -251,7 +251,7 @@ watch([() => selectedScheme.value, () => data.value], () => {
         </div>
         <div
           class=":uno: flex flex-1 shrink flex-col"
-          :class="{':uno: w-auto flex-none': !!selectedData }"
+          :class="{ ':uno: w-auto flex-none': !!selectedData }"
         >
           <div
             v-if="selectedScheme"
