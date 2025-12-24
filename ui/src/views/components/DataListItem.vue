@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import type { Unstructured } from '@/types';
 import { buildBaseApiUrl } from '@/utils/api';
-import { formatDatetime } from '@/utils/date';
 import { axiosInstance } from '@halo-dev/api-client';
 import {
   Dialog,
@@ -12,6 +11,7 @@ import {
   VEntityField,
   VStatusDot,
 } from '@halo-dev/components';
+import { utils } from '@halo-dev/ui-shared';
 import { useQueryClient } from '@tanstack/vue-query';
 
 const queryClient = useQueryClient();
@@ -81,7 +81,9 @@ function handleDelete() {
           <VStatusDot v-tooltip="'删除中'" state="warning" animate />
         </template>
       </VEntityField>
-      <VEntityField :description="formatDatetime(data.metadata.creationTimestamp)"></VEntityField>
+      <VEntityField
+        :description="utils.date.format(data.metadata.creationTimestamp)"
+      ></VEntityField>
     </template>
     <template #dropdownItems>
       <VDropdownItem @click="handleExport()">导出</VDropdownItem>

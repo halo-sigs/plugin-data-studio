@@ -1,9 +1,8 @@
-import { definePlugin } from '@halo-dev/console-shared';
-import { defineAsyncComponent, markRaw } from 'vue';
+import { definePlugin } from '@halo-dev/ui-shared';
+import 'uno.css';
+import { markRaw } from 'vue';
 import TablerDatabaseEdit from '~icons/tabler/database-edit';
 import './styles/main.scss';
-import { VLoading } from '@halo-dev/components';
-import 'uno.css';
 
 export default definePlugin({
   components: {},
@@ -13,10 +12,7 @@ export default definePlugin({
       route: {
         path: 'data-studio',
         name: 'DataStudio',
-        component: defineAsyncComponent({
-          loader: () => import('./views/DataStudio.vue'),
-          loadingComponent: VLoading,
-        }),
+        component: () => import('./views/DataStudio.vue'),
         meta: {
           title: 'Data Studio（数据工厂）',
           description: '支持查询系统内所有模型，以及维护任意模型数据',
