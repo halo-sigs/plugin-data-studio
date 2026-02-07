@@ -55,7 +55,7 @@ const handleSkip = () => {
           2.
           <a
             class=":uno: text-indigo-600"
-            href="https://docs.halo.run/developer-guide/plugin/basics/framework"
+            href="https://docs.halo.run/developer-guide/core/framework"
             target="_blank"
             >Halo 架构概览
           </a>

@@ -9,7 +9,7 @@ Halo 的数据维护插件，支持查询系统内所有模型，以及维护任
 相关资料：
 
 - [自定义模型设计](https://github.com/halo-dev/rfcs/tree/main/extension)
-- [Halo 架构概览](https://docs.halo.run/developer-guide/plugin/basics/framework)
+- [Halo 架构概览](https://docs.halo.run/developer-guide/core/framework)
 
 ## 特性
 
