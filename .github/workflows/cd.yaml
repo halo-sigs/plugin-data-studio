@@ -15,5 +15,6 @@ jobs:
     with:
       node-version: "24"
       pnpm-version: "10"
+      java-version: "17"
       app-id: app-MrbzY
       ui-path: "ui"
