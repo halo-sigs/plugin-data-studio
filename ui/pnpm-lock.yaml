@@ -39,9 +39,9 @@ importers:
       '@halo-dev/ui-plugin-bundler-kit':
         specifier: ^2.22.0
         version: 2.22.0(@rsbuild/core@1.6.6)(@rsbuild/plugin-vue@1.0.7(@rsbuild/core@1.6.6)(@vue/compiler-sfc@3.5.24)(vue@3.5.24(typescript@5.9.3)))(@vitejs/plugin-vue@5.2.4(vite@5.3.3(@types/node@16.18.126)(sass@1.93.3)(terser@5.42.0))(vue@3.5.24(typescript@5.9.3)))(axios@1.13.2)(vite@5.3.3(@types/node@16.18.126)(sass@1.93.3)(terser@5.42.0))
-      '@iconify/json':
-        specifier: ^2.2.407
-        version: 2.2.407
+      '@iconify-json/tabler':
+        specifier: ^1.2.33
+        version: 1.2.33
       '@rsbuild/core':
         specifier: ^1.6.6
         version: 1.6.6
@@ -363,8 +363,8 @@ packages:
     resolution: {integrity: sha512-93zYdMES/c1D69yZiKDBj0V24vqNzB/koF26KPaagAfd3P/4gUlh3Dys5ogAK+Exi9QyzlD8x/08Zt7wIKcDcA==}
     deprecated: Use @eslint/object-schema instead
 
-  '@iconify/json@2.2.407':
-    resolution: {integrity: sha512-GI81Sh05/31UyyIK2+hhMpzJb3PgvAJq/w6B0xgfQcTMwsWOaLL0QV50WNgoIHltt8FvqgR+BK/nOGnrTqugiQ==}
+  '@iconify-json/tabler@1.2.33':
+    resolution: {integrity: sha512-q9nUQfE/cjIrGh5bAKHTphitAZpT0kX9SxDgZo3Sx8ofeDTsaHVdRwrn+CfKiJ5vQ1b1btqVwizXzIgz9KEPjA==}
 
   '@iconify/types@2.0.0':
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
@@ -2649,10 +2649,9 @@ snapshots:
 
   '@humanwhocodes/object-schema@2.0.3': {}
 
-  '@iconify/json@2.2.407':
+  '@iconify-json/tabler@1.2.33':
     dependencies:
       '@iconify/types': 2.0.0
-      pathe: 2.0.3
 
   '@iconify/types@2.0.0': {}
 
