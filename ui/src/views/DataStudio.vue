@@ -19,11 +19,11 @@ import { useQuery, useQueryClient } from '@tanstack/vue-query';
 import { useRouteQuery } from '@vueuse/router';
 import { computed, ref, watch } from 'vue';
 import TablerDatabaseEdit from '~icons/tabler/database-edit';
+import DataBatchImportModal from './components/DataBatchImportModal.vue';
 import DataCreationModal from './components/DataCreationModal.vue';
 import DataListItem from './components/DataListItem.vue';
 import DataUpdateSection from './components/DataUpdateSection.vue';
 import { useDataImport } from './composables/use-data-import';
-import DataBatchImportModal from './components/DataBatchImportModal.vue';
 
 const queryClient = useQueryClient();
 

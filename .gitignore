@@ -71,5 +71,10 @@ application-local.yaml
 application-local.properties
 
 /ui/node_modules/
+/ui/build/
+.eslintcache
+*.tsbuildinfo
+coverage/
 /workplace/
 /src/main/resources/console/
+/src/main/resources/ui/

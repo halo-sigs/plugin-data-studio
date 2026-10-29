@@ -1,5 +1,4 @@
 import { definePlugin } from '@halo-dev/ui-shared';
-import 'uno.css';
 import { markRaw } from 'vue';
 import TablerDatabaseEdit from '~icons/tabler/database-edit';
 import './styles/main.scss';

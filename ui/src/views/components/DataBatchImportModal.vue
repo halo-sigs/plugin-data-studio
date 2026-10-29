@@ -108,7 +108,7 @@ const resetForm = () => {
           type="file"
           multiple
           accept=".json"
-          class=":uno: block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+          class=":uno: file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 block w-full text-sm text-gray-500 file:mr-4 file:border-0 file:rounded-full file:px-4 file:py-2 file:text-sm file:font-semibold"
           @change="handleFileSelect"
         />
         <p class=":uno: mt-2 text-sm text-gray-500">
@@ -117,13 +117,13 @@ const resetForm = () => {
       </div>
 
       <div v-if="importResults.length > 0" class=":uno: mt-4">
-        <h3 class=":uno: text-sm font-medium mb-2">导入结果：</h3>
+        <h3 class=":uno: mb-2 text-sm font-medium">导入结果：</h3>
         <div class=":uno: max-h-60 overflow-y-auto">
           <div
             v-for="(result, index) in importResults"
             :key="index"
-            class=":uno: text-sm p-2 mb-1 rounded"
-            :class=" {
+            class=":uno: mb-1 rounded p-2 text-sm"
+            :class="{
               ':uno: bg-gray-50 text-gray-700': result.status === 'success',
               ':uno: bg-red-50 text-red-700': result.status === 'error',
             }"
@@ -132,7 +132,7 @@ const resetForm = () => {
               <span>{{ result.name }}</span>
               <span>{{ result.status === 'success' ? '成功' : '失败' }}</span>
             </div>
-            <div v-if="result.message" class=":uno: text-xs mt-1">{{ result.message }}</div>
+            <div v-if="result.message" class=":uno: mt-1 text-xs">{{ result.message }}</div>
           </div>
         </div>
       </div>

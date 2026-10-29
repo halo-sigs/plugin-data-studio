@@ -52,7 +52,9 @@ async function handleSave() {
 </script>
 
 <template>
-  <div class=":uno: sticky top-0 z-10 h-12 flex items-center justify-between border-b bg-white px-4">
+  <div
+    class=":uno: sticky top-0 z-10 h-12 flex items-center justify-between border-b bg-white px-4"
+  >
     <h2 class=":uno: font-semibold">{{ data?.metadata?.name }}</h2>
     <VSpace>
       <VButton size="sm" @click="emit('close')">返回</VButton>

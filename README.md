@@ -21,3 +21,36 @@ Halo 的数据维护插件，支持查询系统内所有模型，以及维护任
 ## 预览
 
 ![Preview](./images/preview.png)
+
+## 开发环境
+
+- Java 21
+- Node.js >=22.12.0
+- pnpm 12.16.1
+- Halo >=2.27.0
+
+## 开发
+
+启动 Halo 并加载插件：
+
+```bash
+./gradlew haloServer
+```
+
+在另一个终端监听 UI 变更：
+
+```bash
+cd ui
+pnpm install
+pnpm dev
+```
+
+开发模式将 UI 产物写入 `build/resources/main/ui`。
+
+## 构建
+
+```bash
+./gradlew clean build
+```
+
+Gradle 会安装 UI 依赖、执行类型检查和 Vite 构建，并将 `ui/build/dist` 下的完整 ESM 产物打包进插件 JAR 的 `ui/` 目录。构建结果位于 `build/libs`。

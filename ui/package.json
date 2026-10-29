@@ -1,11 +1,62 @@
 {
+  "private": true,
   "type": "module",
   "scripts": {
-    "build": "rsbuild build",
-    "dev": "rsbuild build --env-mode development --watch",
-    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
-    "prettier": "prettier --write './**/*.{ts,json,yaml,yml,html,vue}'",
-    "type-check": "vue-tsc --noEmit -p tsconfig.vitest.json --composite false"
+    "build": "run-p type-check \"build-only {@}\" --",
+    "build-only": "vite build",
+    "dev": "vite build --watch --mode=development",
+    "lint:oxlint": "oxlint . --fix",
+    "lint:eslint": "eslint . --fix --cache",
+    "lint": "run-s \"lint:*\"",
+    "format": "prettier --write --experimental-cli src/",
+    "test:unit": "vitest run --passWithNoTests",
+    "type-check": "vue-tsc --build"
+  },
+  "dependencies": {
+    "@halo-dev/api-client": "^2.27.0",
+    "@halo-dev/components": "^2.27.0",
+    "@halo-dev/ui-shared": "^2.27.0",
+    "@json-editor/json-editor": "^2.15.2",
+    "@tanstack/vue-query": "4.37.1",
+    "@vueuse/core": "^10.11.1",
+    "@vueuse/router": "^10.11.1",
+    "axios": "^1.19.0",
+    "vue": "^3.5.40",
+    "vue-router": "~5.1.0"
+  },
+  "devDependencies": {
+    "@halo-dev/ui-plugin-bundler-kit": "^2.27.0",
+    "@iconify-json/tabler": "^1.2.33",
+    "@tsconfig/node24": "^24.0.4",
+    "@types/jsdom": "^28.0.3",
+    "@types/node": "^24.13.3",
+    "@unocss/eslint-config": "^66.12.0",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "@vitest/eslint-plugin": "^1.6.23",
+    "@vue/eslint-config-typescript": "^14.9.0",
+    "@vue/test-utils": "^2.4.11",
+    "@vue/tsconfig": "^0.9.1",
+    "eslint": "^10.7.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-oxlint": "~1.77.0",
+    "eslint-plugin-vue": "~10.9.2",
+    "jiti": "^2.7.0",
+    "jsdom": "^30.0.1",
+    "npm-run-all2": "^9.0.2",
+    "oxlint": "~1.77.0",
+    "prettier": "3.9.6",
+    "prettier-plugin-organize-imports": "^4.3.0",
+    "sass": "^1.102.0",
+    "typescript": "~6.0.0",
+    "unocss": "^66.12.0",
+    "unplugin-icons": "^23.0.1",
+    "vite": "^8.3.5",
+    "vitest": "^4.1.10",
+    "vue-tsc": "^3.3.7"
+  },
+  "packageManager": "pnpm@12.16.1",
+  "engines": {
+    "node": ">=22.12.0"
   },
   "prettier": {
     "arrowParens": "always",
@@ -19,39 +70,5 @@
     "tabWidth": 2,
     "trailingComma": "es5",
     "useTabs": false
-  },
-  "dependencies": {
-    "@halo-dev/api-client": "^2.22.0",
-    "@halo-dev/components": "^2.22.0",
-    "@halo-dev/ui-shared": "^2.22.0",
-    "@json-editor/json-editor": "^2.15.2",
-    "@tanstack/vue-query": "4.37.1",
-    "@vueuse/core": "^10.11.1",
-    "@vueuse/router": "^10.11.1",
-    "axios": "^1.13.2",
-    "vue": "^3.5.24"
-  },
-  "devDependencies": {
-    "@halo-dev/ui-plugin-bundler-kit": "^2.22.0",
-    "@iconify-json/tabler": "^1.2.33",
-    "@rsbuild/core": "^1.6.6",
-    "@rsbuild/plugin-sass": "^1.4.0",
-    "@rushstack/eslint-patch": "^1.15.0",
-    "@types/node": "^16.18.126",
-    "@unocss/eslint-config": "^66.5.6",
-    "@unocss/webpack": "^66.5.6",
-    "@vue/eslint-config-prettier": "^9.0.0",
-    "@vue/eslint-config-typescript": "^13.0.0",
-    "@vue/tsconfig": "^0.8.1",
-    "eslint": "^8.57.1",
-    "eslint-plugin-vue": "^9.33.0",
-    "prettier": "^3.6.2",
-    "prettier-plugin-organize-imports": "^4.3.0",
-    "sass-embedded": "^1.93.3",
-    "typescript": "~5.9.3",
-    "unocss": "^66.5.6",
-    "unplugin-icons": "^22.5.0",
-    "vue-tsc": "^3.1.4"
-  },
-  "packageManager": "pnpm@10.22.0"
+  }
 }
