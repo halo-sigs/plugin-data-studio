@@ -12,7 +12,10 @@ export function isJsonEqual(left: unknown, right: unknown): boolean {
     const keys = Object.keys(left);
     return (
       keys.length === Object.keys(right).length &&
-      keys.every((key) => Object.prototype.hasOwnProperty.call(right, key) && isJsonEqual(left[key], right[key]))
+      keys.every(
+        (key) =>
+          Object.prototype.hasOwnProperty.call(right, key) && isJsonEqual(left[key], right[key])
+      )
     );
   }
   return false;

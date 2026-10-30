@@ -30,7 +30,9 @@ const leaveDialogVisible = shallowRef(false);
 let resolveLeave: ((leave: boolean) => void) | undefined;
 
 async function save(): Promise<boolean> {
-  if (isSubmitting.value || (source.value && !dirty.value)) return false;
+  if (isSubmitting.value) return false;
+  dataEditor.value?.flush?.();
+  if (source.value && !dirty.value) return false;
   const value = dataEditor.value?.getData?.();
   if (!value) return false;
   try {
@@ -124,7 +126,7 @@ defineExpose({ confirmLeave });
           size="sm"
           type="secondary"
           :loading="isSubmitting"
-          :disabled="isSubmitting || (!!source && !dirty)"
+          :disabled="isSubmitting"
           @click="save"
           >保存</VButton
         >

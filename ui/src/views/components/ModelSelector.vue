@@ -26,8 +26,7 @@ const groups = computed(() => {
   const terms = keyword.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
   for (const scheme of props.schemes) {
     const { group = '', kind, version } = scheme.groupVersionKind;
-    const searchable =
-      `${group} ${kind} ${version} ${group ? '' : '核心模型'}`.toLowerCase();
+    const searchable = `${group} ${kind} ${version} ${group ? '' : '核心模型'}`.toLowerCase();
     if (!terms.every((term) => searchable.includes(term))) continue;
     const items = result.get(group) || [];
     items.push(scheme);
