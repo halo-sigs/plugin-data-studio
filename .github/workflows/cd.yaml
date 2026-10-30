@@ -18,3 +18,4 @@ jobs:
       java-version: "21"
       app-id: app-MrbzY
       ui-path: "ui"
+      sync-github-readme: true
