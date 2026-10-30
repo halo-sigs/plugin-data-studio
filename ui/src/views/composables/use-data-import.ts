@@ -6,7 +6,7 @@ import { useQueryClient } from '@tanstack/vue-query';
 import { useFileDialog } from '@vueuse/core';
 import { watch, type Ref } from 'vue';
 
-export function useDataImport(scheme: Ref<Scheme>) {
+export function useDataImport(scheme: Ref<Scheme | undefined>) {
   const queryClient = useQueryClient();
 
   const { files, open, reset } = useFileDialog({
@@ -17,7 +17,8 @@ export function useDataImport(scheme: Ref<Scheme>) {
     () => files.value,
     () => {
       const file = files.value?.item(0);
-      if (file) {
+      const selectedScheme = scheme.value;
+      if (file && selectedScheme) {
         const reader = new FileReader();
         reader.onload = async (e) => {
           const content = e.target?.result;
@@ -29,7 +30,7 @@ export function useDataImport(scheme: Ref<Scheme>) {
 
           const data = JSON.parse(content?.toString() || '');
 
-          const { group, version, kind } = scheme.value.groupVersionKind;
+          const { group, version, kind } = selectedScheme.groupVersionKind;
 
           if (
             kind !== data.kind ||
@@ -43,7 +44,7 @@ export function useDataImport(scheme: Ref<Scheme>) {
 
           try {
             originData = (
-              await axiosInstance.get(`${buildBaseApiUrl(scheme.value)}/${data.metadata.name}`)
+              await axiosInstance.get(`${buildBaseApiUrl(selectedScheme)}/${data.metadata.name}`)
             ).data;
           } catch (error) {}
 
@@ -54,7 +55,7 @@ export function useDataImport(scheme: Ref<Scheme>) {
               onConfirm: async () => {
                 try {
                   await axiosInstance.put(
-                    `${buildBaseApiUrl(scheme.value)}/${data.metadata.name}`,
+                    `${buildBaseApiUrl(selectedScheme)}/${data.metadata.name}`,
                     data
                   );
                   Toast.success('更新成功');
@@ -64,7 +65,7 @@ export function useDataImport(scheme: Ref<Scheme>) {
               },
             });
           } else {
-            await axiosInstance.post(buildBaseApiUrl(scheme.value), data);
+            await axiosInstance.post(buildBaseApiUrl(selectedScheme), data);
             Toast.success('导入成功');
           }
 

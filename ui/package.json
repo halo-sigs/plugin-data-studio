@@ -16,11 +16,11 @@
     "@halo-dev/api-client": "^2.27.0",
     "@halo-dev/components": "^2.27.0",
     "@halo-dev/ui-shared": "^2.27.0",
-    "@json-editor/json-editor": "^2.15.2",
     "@tanstack/vue-query": "4.37.1",
     "@vueuse/core": "^10.11.1",
     "@vueuse/router": "^10.11.1",
     "axios": "^1.19.0",
+    "vanilla-jsoneditor": "^3.13.0",
     "vue": "^3.5.40",
     "vue-router": "~5.1.0"
   },
