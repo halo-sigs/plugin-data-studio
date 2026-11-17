@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import WarningModal from '@/components/WarningModal.vue';
-import type { ListResponse, Scheme, Unstructured } from '@/types';
-import { buildBaseApiUrl } from '@/utils/api';
+import type { DataQuery, ListResponse, QueryPreset, Scheme, Unstructured } from '@/types';
+import { apiErrorMessage, apiErrorStatus, buildBaseApiUrl, buildListParams } from '@/utils/api';
 import { axiosInstance } from '@halo-dev/api-client';
 import {
   Dialog,
@@ -17,14 +17,20 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/vue-query';
 import { useRouteQuery } from '@vueuse/router';
 import { computed, nextTick, ref, shallowRef, watch } from 'vue';
+import TablerArrowDown from '~icons/tabler/arrow-down';
+import TablerArrowUp from '~icons/tabler/arrow-up';
 import TablerChevronLeft from '~icons/tabler/chevron-left';
 import TablerChevronRight from '~icons/tabler/chevron-right';
 import TablerDatabaseEdit from '~icons/tabler/database-edit';
+import TablerFilter from '~icons/tabler/filter';
 import TablerSearch from '~icons/tabler/search';
+import TablerX from '~icons/tabler/x';
 import DataBatchImportModal from './components/DataBatchImportModal.vue';
 import DataListItem from './components/DataListItem.vue';
 import DataUpdateSection from './components/DataUpdateSection.vue';
 import ModelSelector from './components/ModelSelector.vue';
+import QueryPanel from './components/QueryPanel.vue';
+import QueryPresetMenu from './components/QueryPresetMenu.vue';
 import { useDataImport } from './composables/use-data-import';
 
 const queryClient = useQueryClient();
@@ -56,24 +62,94 @@ const keyword = shallowRef('');
 watch(keyword, () => {
   page.value = 1;
 });
-const { data, isLoading, isError, refetch } = useQuery({
-  queryKey: ['plugin-data-studio:data', selectedScheme, page, size, keyword],
+// Conditions live in the URL so a refresh or shared link keeps the same result set.
+const toTerms = (value: string | string[]) => [value].flat().filter(Boolean);
+const fieldSelectors = useRouteQuery<string | string[], string[]>('fieldSelector', [], {
+  transform: toTerms,
+});
+const labelSelectors = useRouteQuery<string | string[], string[]>('labelSelector', [], {
+  transform: toTerms,
+});
+const sorts = useRouteQuery<string | string[], string[]>('sort', [], { transform: toTerms });
+const activePreset = useRouteQuery<string>('preset', '');
+const appliedQuery = computed<DataQuery>(() => ({
+  fieldSelectors: fieldSelectors.value,
+  labelSelectors: labelSelectors.value,
+  sorts: sorts.value,
+}));
+const queryPanelVisible = shallowRef(false);
+const customQueryCount = computed(
+  () => fieldSelectors.value.length + labelSelectors.value.length + sorts.value.length
+);
+const hasCustomQuery = computed(() => customQueryCount.value > 0);
+function sortTerm(term: string) {
+  const [field, direction] = term.split(',');
+  return { field, desc: direction?.trim().toLowerCase() === 'desc' };
+}
+const { data, isLoading, isError, error, refetch } = useQuery({
+  queryKey: [
+    'plugin-data-studio:data',
+    selectedScheme,
+    page,
+    size,
+    keyword,
+    fieldSelectors,
+    labelSelectors,
+    sorts,
+  ],
   queryFn: async () => {
     if (!selectedScheme.value) return;
     return (
       await axiosInstance.get<ListResponse<Unstructured>>(buildBaseApiUrl(selectedScheme.value), {
-        params: {
+        params: buildListParams({
           page: page.value,
           size: size.value,
-          fieldSelector: keyword.value ? `metadata.name=${keyword.value}` : undefined,
-        },
+          keyword: keyword.value,
+          fieldSelectors: fieldSelectors.value,
+          labelSelectors: labelSelectors.value,
+          sorts: sorts.value,
+        }),
       })
     ).data;
   },
   refetchInterval: (data) =>
     data?.items.some((item) => !!item.metadata.deletionTimestamp) ? 1000 : false,
   enabled: computed(() => !!selectedScheme.value),
+  // A rejected custom condition will fail the same way again.
+  retry: (failureCount) => !hasCustomQuery.value && failureCount < 3,
 });
+const dataError = computed(() => apiErrorMessage(error.value, '数据加载失败'));
+// Only rejections of the query itself (500) hint at a missing index.
+const indexError = computed(() => hasCustomQuery.value && apiErrorStatus(error.value) === 500);
+const hasFilter = computed(() => !!keyword.value || hasCustomQuery.value);
+function resetFilters() {
+  keyword.value = '';
+  clearQuery();
+}
+function applyQuery(query: DataQuery) {
+  fieldSelectors.value = query.fieldSelectors;
+  labelSelectors.value = query.labelSelectors;
+  sorts.value = query.sorts;
+  page.value = 1;
+}
+function applyPreset(preset: QueryPreset) {
+  applyQuery({
+    fieldSelectors: preset.spec.fieldSelectors || [],
+    labelSelectors: preset.spec.labelSelectors || [],
+    sorts: preset.spec.sorts || [],
+  });
+  activePreset.value = preset.metadata.name;
+}
+function removeTerm(key: keyof DataQuery, index: number) {
+  applyQuery({
+    ...appliedQuery.value,
+    [key]: appliedQuery.value[key].filter((_, i) => i !== index),
+  });
+}
+function clearQuery() {
+  applyQuery({ fieldSelectors: [], labelSelectors: [], sorts: [] });
+  activePreset.value = '';
+}
 
 // The editor owns a snapshot; list refetches must not replace an active draft.
 const selectedData = shallowRef<Unstructured>();
@@ -112,7 +188,7 @@ watch(selectedSchemeName, () => {
   selectedData.value = undefined;
   isCreating.value = false;
   keyword.value = '';
-  page.value = 1;
+  clearQuery();
 });
 
 const batchImportModalVisible = shallowRef(false);
@@ -124,7 +200,9 @@ const isSelectAll = computed(
     data.value.items.every((item) => selectedItems.value.has(item.metadata.name))
 );
 const partiallySelected = computed(() => selectedItems.value.size > 0 && !isSelectAll.value);
-watch([selectedSchemeName, page, size, keyword], () => selectedItems.value.clear());
+watch([selectedSchemeName, page, size, keyword, fieldSelectors, labelSelectors, sorts], () =>
+  selectedItems.value.clear()
+);
 watch(data, (value) => {
   const names = new Set(value?.items.map((item) => item.metadata.name));
   selectedItems.value = new Set([...selectedItems.value].filter((name) => names.has(name)));
@@ -225,22 +303,91 @@ function deleteSelection() {
                 <VButton size="sm" type="secondary" @click="edit()">新增</VButton>
               </div>
             </div>
-            <form class="studio-search" @submit.prevent>
-              <TablerSearch aria-hidden="true" />
-              <input
-                v-model.lazy.trim="keyword"
-                aria-label="按名称精确查找"
-                placeholder="按名称精确查找"
-              />
-              <button
-                v-if="keyword"
-                type="button"
-                class=":uno: shrink-0 text-xs text-gray-500"
-                @click="keyword = ''"
-              >
-                清空
-              </button>
-            </form>
+            <div class="studio-search-row">
+              <form class="studio-search" @submit.prevent>
+                <TablerSearch aria-hidden="true" />
+                <input
+                  v-model.lazy.trim="keyword"
+                  aria-label="按名称精确查找"
+                  placeholder="按名称精确查找"
+                />
+                <button
+                  v-if="keyword"
+                  type="button"
+                  class=":uno: shrink-0 text-xs text-gray-500"
+                  @click="keyword = ''"
+                >
+                  清空
+                </button>
+              </form>
+              <div class="studio-query-actions">
+                <VButton
+                  class="studio-query-trigger"
+                  :class="{ active: hasCustomQuery }"
+                  :aria-expanded="queryPanelVisible"
+                  @click="queryPanelVisible = !queryPanelVisible"
+                >
+                  <TablerFilter aria-hidden="true" />
+                  条件<span v-if="customQueryCount"> · {{ customQueryCount }}</span>
+                </VButton>
+                <QueryPresetMenu
+                  :scheme="selectedScheme"
+                  :query="appliedQuery"
+                  :active="activePreset"
+                  @select="applyPreset"
+                />
+              </div>
+            </div>
+            <QueryPanel
+              v-if="queryPanelVisible"
+              :query="appliedQuery"
+              @apply="applyQuery"
+              @close="queryPanelVisible = false"
+            />
+            <div v-else-if="hasCustomQuery" class="studio-query-summary">
+              <span
+                v-for="(term, index) in fieldSelectors"
+                :key="`field:${term}`"
+                class="studio-query-term"
+                title="字段条件"
+                ><span>{{ term }}</span
+                ><button
+                  type="button"
+                  :aria-label="`移除 ${term}`"
+                  @click="removeTerm('fieldSelectors', index)"
+                >
+                  <TablerX aria-hidden="true" /></button
+              ></span>
+              <span
+                v-for="(term, index) in labelSelectors"
+                :key="`label:${term}`"
+                class="studio-query-term label"
+                title="标签条件"
+                ><span>{{ term }}</span
+                ><button
+                  type="button"
+                  :aria-label="`移除 ${term}`"
+                  @click="removeTerm('labelSelectors', index)"
+                >
+                  <TablerX aria-hidden="true" /></button
+              ></span>
+              <span
+                v-for="(term, index) in sorts"
+                :key="`sort:${term}`"
+                class="studio-query-term sort"
+                :title="term"
+                ><component
+                  :is="sortTerm(term).desc ? TablerArrowDown : TablerArrowUp"
+                  aria-hidden="true" /><span>{{ sortTerm(term).field }}</span
+                ><button
+                  type="button"
+                  :aria-label="`移除 ${term}`"
+                  @click="removeTerm('sorts', index)"
+                >
+                  <TablerX aria-hidden="true" /></button
+              ></span>
+              <button type="button" class="studio-query-clear" @click="clearQuery">清除</button>
+            </div>
           </div>
           <div v-if="data?.items.length" class="studio-batch-bar">
             <label class=":uno: flex items-center gap-2 text-sm text-gray-600">
@@ -260,12 +407,20 @@ function deleteSelection() {
           <div class="studio-records-scroll">
             <VLoading v-if="isLoading" />
             <div v-else-if="isError" class="studio-empty" role="alert">
-              <p>数据加载失败</p>
-              <VButton size="sm" @click="refetch()">重试</VButton>
+              <p>{{ dataError }}</p>
+              <p v-if="indexError" class=":uno: text-xs text-gray-500">
+                字段条件仅支持已建立索引的字段
+              </p>
+              <div class=":uno: flex items-center gap-2">
+                <VButton v-if="hasCustomQuery" size="sm" @click="queryPanelVisible = true"
+                  >编辑条件</VButton
+                >
+                <VButton size="sm" @click="refetch()">重试</VButton>
+              </div>
             </div>
             <div v-else-if="!data?.items.length" class="studio-empty">
-              <p>{{ keyword ? '没有匹配的数据' : '此模型当前没有数据' }}</p>
-              <VButton v-if="keyword" size="sm" @click="keyword = ''">清空筛选</VButton>
+              <p>{{ hasFilter ? '没有匹配的数据' : '此模型当前没有数据' }}</p>
+              <VButton v-if="hasFilter" size="sm" @click="resetFilters">清空筛选</VButton>
               <VButton v-else-if="!hasEditor" size="sm" @click="edit()">新增数据</VButton>
             </div>
             <VEntityContainer v-else>
