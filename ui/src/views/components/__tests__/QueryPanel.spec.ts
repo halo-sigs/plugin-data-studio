@@ -61,4 +61,22 @@ describe('QueryPanel', () => {
       'metadata.name',
     ]);
   });
+
+  it('keeps the draft when the applied query is recreated with the same terms', async () => {
+    const query = { ...empty, fieldSelectors: ['metadata.name!=a', 'metadata.name!=b'] };
+    const wrapper = mountPanel(query);
+    await wrapper.findAll('textarea')[1]!.setValue('app=draft');
+
+    await wrapper.setProps({ query: { ...query, fieldSelectors: [...query.fieldSelectors] } });
+
+    expect(wrapper.findAll('textarea')[1]!.element.value).toBe('app=draft');
+  });
+
+  it('drops duplicate lines', async () => {
+    const wrapper = mountPanel();
+    await wrapper.findAll('textarea')[0]!.setValue('spec.slug=a\nspec.slug=a');
+    await applyButton(wrapper).trigger('click');
+
+    expect(wrapper.emitted('apply')?.[0]?.[0]).toMatchObject({ fieldSelectors: ['spec.slug=a'] });
+  });
 });

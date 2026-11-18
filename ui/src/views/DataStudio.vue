@@ -58,12 +58,12 @@ watch(
 );
 const page = useRouteQuery<number>('page', 1, { transform: Number });
 const size = useRouteQuery<number>('size', 20, { transform: Number });
-const keyword = shallowRef('');
+const keyword = useRouteQuery<string>('keyword', '');
 watch(keyword, () => {
   page.value = 1;
 });
 // Conditions live in the URL so a refresh or shared link keeps the same result set.
-const toTerms = (value: string | string[]) => [value].flat().filter(Boolean);
+const toTerms = (value: string | string[]) => [...new Set([value].flat().filter(Boolean))];
 const fieldSelectors = useRouteQuery<string | string[], string[]>('fieldSelector', [], {
   transform: toTerms,
 });
@@ -145,6 +145,9 @@ function removeTerm(key: keyof DataQuery, index: number) {
     ...appliedQuery.value,
     [key]: appliedQuery.value[key].filter((_, i) => i !== index),
   });
+}
+function presetRemoved(preset: QueryPreset) {
+  if (preset.metadata.name === activePreset.value) activePreset.value = '';
 }
 function clearQuery() {
   applyQuery({ fieldSelectors: [], labelSelectors: [], sorts: [] });
@@ -288,7 +291,9 @@ function deleteSelection() {
             <div class=":uno: flex flex-wrap items-center justify-between gap-3">
               <h2 class=":uno: min-w-0 break-words text-base text-gray-900 font-semibold">
                 {{ selectedScheme.groupVersionKind.kind }}
-                <span class=":uno: text-gray-500 font-normal">({{ data?.total || 0 }})</span>
+                <span v-if="!isError" class=":uno: text-gray-500 font-normal"
+                  >({{ data?.total || 0 }})</span
+                >
               </h2>
               <div v-if="!hasEditor" class=":uno: flex items-center gap-2">
                 <VDropdown>
@@ -335,16 +340,18 @@ function deleteSelection() {
                   :query="appliedQuery"
                   :active="activePreset"
                   @select="applyPreset"
+                  @remove="presetRemoved"
                 />
               </div>
             </div>
             <QueryPanel
-              v-if="queryPanelVisible"
+              v-show="queryPanelVisible"
+              :key="selectedSchemeName"
               :query="appliedQuery"
               @apply="applyQuery"
               @close="queryPanelVisible = false"
             />
-            <div v-else-if="hasCustomQuery" class="studio-query-summary">
+            <div v-if="!queryPanelVisible && hasCustomQuery" class="studio-query-summary">
               <span
                 v-for="(term, index) in fieldSelectors"
                 :key="`field:${term}`"
@@ -407,15 +414,15 @@ function deleteSelection() {
           <div class="studio-records-scroll">
             <VLoading v-if="isLoading" />
             <div v-else-if="isError" class="studio-empty" role="alert">
-              <p>{{ dataError }}</p>
-              <p v-if="indexError" class=":uno: text-xs text-gray-500">
-                字段条件仅支持已建立索引的字段
-              </p>
+              <p>{{ indexError ? '条件无效或字段未建立索引' : dataError }}</p>
               <div class=":uno: flex items-center gap-2">
-                <VButton v-if="hasCustomQuery" size="sm" @click="queryPanelVisible = true"
+                <VButton
+                  v-if="hasCustomQuery && !queryPanelVisible"
+                  size="sm"
+                  @click="queryPanelVisible = true"
                   >编辑条件</VButton
                 >
-                <VButton size="sm" @click="refetch()">重试</VButton>
+                <VButton v-if="!indexError" size="sm" @click="refetch()">重试</VButton>
               </div>
             </div>
             <div v-else-if="!data?.items.length" class="studio-empty">

@@ -23,7 +23,7 @@ import TablerBookmark from '~icons/tabler/bookmark';
 import TablerChevronDown from '~icons/tabler/chevron-down';
 
 const props = defineProps<{ scheme: Scheme; query: DataQuery; active?: string }>();
-const emit = defineEmits<{ select: [preset: QueryPreset] }>();
+const emit = defineEmits<{ select: [preset: QueryPreset]; remove: [preset: QueryPreset] }>();
 
 const queryClient = useQueryClient();
 const PRESETS_KEY = ['plugin-data-studio:query-presets'];
@@ -133,6 +133,7 @@ function remove(preset: QueryPreset) {
         queryClient.setQueryData<QueryPreset[]>(PRESETS_KEY, (items) =>
           items?.filter((item) => item.metadata.name !== preset.metadata.name)
         );
+        emit('remove', preset);
         Toast.success('已删除');
       } catch (error) {
         Toast.error(apiErrorMessage(error, '删除失败'));
@@ -166,6 +167,7 @@ function remove(preset: QueryPreset) {
         <VDropdownItem v-close-popper :disabled="!hasConditions" @click="saveModalVisible = true"
           >保存为新方案…</VDropdownItem
         >
+        <p v-if="!hasConditions" class="studio-preset-hint">先设置条件再保存</p>
         <template v-if="activePreset">
           <VDropdownItem v-if="modified" v-close-popper @click="update(activePreset)"
             >更新「{{ activePreset.spec.displayName }}」</VDropdownItem

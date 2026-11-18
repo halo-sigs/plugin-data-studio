@@ -246,5 +246,6 @@ describe('QueryPresetMenu', () => {
     expect(del).toHaveBeenCalledWith(`${QUERY_PRESET_API}/preset-1`);
     expect(item(wrapper, '已发布文章')).toBeUndefined();
     expect(wrapper.get('.studio-preset-trigger-name').text()).toBe('方案');
+    expect(wrapper.emitted('remove')?.[0]?.[0]).toMatchObject({ metadata: { name: 'preset-1' } });
   });
 });
