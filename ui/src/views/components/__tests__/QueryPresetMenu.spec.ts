@@ -1,4 +1,4 @@
-import type { DataQuery, QueryPreset, Scheme } from '@/types';
+import type { DataQuery, ExportConfig, QueryPreset, Scheme } from '@/types';
 import { QUERY_PRESET_API } from '@/utils/api';
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query';
 import { flushPromises, mount } from '@vue/test-utils';
@@ -74,7 +74,12 @@ const presetQuery: DataQuery = {
   sorts: [],
 };
 
-async function mountMenu(props: { query: DataQuery; active?: string }) {
+async function mountMenu(props: {
+  query: DataQuery;
+  active?: string;
+  exportConfig?: ExportConfig;
+  placeholder?: string;
+}) {
   const wrapper = mount(QueryPresetMenu, {
     props: { scheme, ...props },
     global: {
@@ -214,6 +219,38 @@ describe('QueryPresetMenu', () => {
     });
   });
 
+  it('saves, compares and clears the creation range', async () => {
+    const range = { start: '2026-11-01', end: '2026-11-18' };
+    const ranged = { ...presetQuery, createdRange: range };
+    post.mockResolvedValue({ data: preset });
+    const creating = await mountMenu({
+      query: { ...presetQuery, fieldSelectors: [], createdRange: range },
+    });
+    await item(creating, '保存为新方案…')!.trigger('click');
+    creating.findComponent(FormKit).vm.$emit('submit', { displayName: '本月' });
+    await flushPromises();
+    expect(post.mock.calls[0]![1]).toMatchObject({
+      spec: { fieldSelectors: [], createdRange: range },
+    });
+
+    // Stored in the server's key order.
+    const storedRange = { end: range.end, start: range.start };
+    const stored = { ...preset, spec: { ...preset.spec, createdRange: storedRange } };
+    get.mockResolvedValue({ data: { items: [stored] } });
+    const unchanged = await mountMenu({ query: ranged, active: 'preset-1' });
+    expect(unchanged.find('.studio-preset-modified').exists()).toBe(false);
+
+    put.mockResolvedValue({ data: stored });
+    const cleared = await mountMenu({ query: presetQuery, active: 'preset-1' });
+    expect(cleared.find('.studio-preset-modified').exists()).toBe(true);
+    await item(cleared, '更新「已发布文章」')!.trigger('click');
+    await flushPromises();
+    // Serialized like axios does, so an undefined range removes the stored one.
+    expect(JSON.parse(JSON.stringify(put.mock.calls[0]![1])).spec).not.toHaveProperty(
+      'createdRange'
+    );
+  });
+
   it('hides presets the server still lists while deleting them', async () => {
     get.mockResolvedValue({
       data: {
@@ -245,7 +282,92 @@ describe('QueryPresetMenu', () => {
 
     expect(del).toHaveBeenCalledWith(`${QUERY_PRESET_API}/preset-1`);
     expect(item(wrapper, '已发布文章')).toBeUndefined();
-    expect(wrapper.get('.studio-preset-trigger-name').text()).toBe('方案');
+    expect(wrapper.get('.studio-preset-trigger-name').text()).toBe('查询方案');
     expect(wrapper.emitted('remove')?.[0]?.[0]).toMatchObject({ metadata: { name: 'preset-1' } });
+  });
+
+  it('shows the placeholder until a preset is applied', async () => {
+    const wrapper = await mountMenu({ query: presetQuery, placeholder: '选择方案' });
+    expect(wrapper.get('.studio-preset-trigger-name').text()).toBe('选择方案');
+
+    await wrapper.setProps({ active: 'preset-1' });
+    expect(wrapper.get('.studio-preset-trigger-name').text()).toBe('已发布文章');
+  });
+
+  describe('with export settings', () => {
+    const csv: ExportConfig = {
+      format: 'CSV',
+      columns: [{ field: ' spec.title ', header: ' 标题 ' }, { field: '  ' }],
+    };
+    const savedCsv = { format: 'CSV', columns: [{ field: 'spec.title', header: '标题' }] };
+
+    it('saves the filters together with normalized export settings', async () => {
+      post.mockResolvedValue({ data: preset });
+      // Export settings alone are enough to save, even without filters.
+      const empty = { fieldSelectors: [], labelSelectors: [], sorts: [] };
+      const wrapper = await mountMenu({ query: empty, exportConfig: csv });
+
+      await item(wrapper, '保存为新方案…')!.trigger('click');
+      wrapper.findComponent(FormKit).vm.$emit('submit', { displayName: '标题 CSV' });
+      await flushPromises();
+
+      expect(post.mock.calls[0]![1]).toMatchObject({ spec: { ...empty, export: savedCsv } });
+    });
+
+    it('cannot save CSV settings without fields', async () => {
+      const wrapper = await mountMenu({
+        query: presetQuery,
+        exportConfig: { format: 'CSV', columns: [] },
+      });
+
+      expect(item(wrapper, '保存为新方案…')!.attributes('disabled')).toBeDefined();
+    });
+
+    it('offers to store export settings in a filter-only preset without marking it modified', async () => {
+      put.mockResolvedValue({ data: preset });
+      const wrapper = await mountMenu({
+        query: presetQuery,
+        active: 'preset-1',
+        exportConfig: csv,
+      });
+
+      expect(wrapper.find('.studio-preset-modified').exists()).toBe(false);
+      await item(wrapper, '更新「已发布文章」')!.trigger('click');
+      await flushPromises();
+
+      expect(put).toHaveBeenCalledWith(`${QUERY_PRESET_API}/preset-1`, {
+        ...preset,
+        spec: { ...preset.spec, ...presetQuery, export: savedCsv },
+      });
+    });
+
+    it('marks the preset modified when its export settings change', async () => {
+      get.mockResolvedValue({
+        data: { items: [{ ...preset, spec: { ...preset.spec, export: savedCsv } }] },
+      });
+      const same = await mountMenu({ query: presetQuery, active: 'preset-1', exportConfig: csv });
+      expect(same.find('.studio-preset-modified').exists()).toBe(false);
+      expect(item(same, '更新「已发布文章」')).toBeUndefined();
+
+      const changed = await mountMenu({
+        query: presetQuery,
+        active: 'preset-1',
+        exportConfig: { format: 'JSON' },
+      });
+      expect(changed.find('.studio-preset-modified').exists()).toBe(true);
+    });
+
+    it('keeps stored export settings when the list page updates the filters', async () => {
+      const stored = { ...preset, spec: { ...preset.spec, export: savedCsv } };
+      get.mockResolvedValue({ data: { items: [stored] } });
+      put.mockResolvedValue({ data: stored });
+      const changed = { ...presetQuery, sorts: ['metadata.name,desc'] };
+      const wrapper = await mountMenu({ query: changed, active: 'preset-1' });
+
+      await item(wrapper, '更新「已发布文章」')!.trigger('click');
+      await flushPromises();
+
+      expect(put.mock.calls[0]![1]).toMatchObject({ spec: { export: savedCsv, ...changed } });
+    });
   });
 });

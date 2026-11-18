@@ -1,6 +1,15 @@
 import type { Scheme } from '@/types';
-import { describe, expect, it } from 'vitest';
-import { apiErrorStatus, buildListParams, schemeApiVersion } from '../api';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  apiErrorStatus,
+  buildListParams,
+  fetchRecords,
+  RECORDS_API,
+  schemeApiVersion,
+} from '../api';
+
+const get = vi.hoisted(() => vi.fn<(url: string, config: unknown) => Promise<{ data: unknown }>>());
+vi.mock('@halo-dev/api-client', () => ({ axiosInstance: { get } }));
 
 const scheme: Scheme = {
   type: 'run.halo.app.core.extension.content.Post',
@@ -37,6 +46,44 @@ describe('buildListParams', () => {
     });
 
     expect(params).toEqual({});
+  });
+
+  it('turns the creation date range into instant bounds', () => {
+    const params = buildListParams({ createdRange: { start: '2026-11-01', end: '2026-11-18' } });
+
+    expect(params).toEqual({
+      createdAfter: new Date(2026, 10, 1).toISOString(),
+      createdBefore: new Date(2026, 10, 19).toISOString(),
+    });
+  });
+});
+
+describe('fetchRecords', () => {
+  beforeEach(() => {
+    get.mockReset();
+    get.mockResolvedValue({ data: { items: [], total: 0 } });
+  });
+
+  it("uses the model's own list API without a time range", async () => {
+    await fetchRecords(scheme, { page: 1, fieldSelector: ['spec.slug=a'] });
+
+    expect(get).toHaveBeenCalledWith('/apis/content.halo.run/v1alpha1/posts', {
+      params: { page: 1, fieldSelector: ['spec.slug=a'] },
+    });
+  });
+
+  it('routes ranged queries through the plugin with the model identity', async () => {
+    await fetchRecords(scheme, { page: 1, createdAfter: 'a', createdBefore: 'b' });
+
+    expect(get).toHaveBeenCalledWith(RECORDS_API, {
+      params: {
+        apiVersion: 'content.halo.run/v1alpha1',
+        kind: 'Post',
+        page: 1,
+        createdAfter: 'a',
+        createdBefore: 'b',
+      },
+    });
   });
 });
 

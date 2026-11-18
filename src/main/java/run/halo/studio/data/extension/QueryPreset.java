@@ -13,6 +13,8 @@ import run.halo.app.extension.GVK;
     kind = "QueryPreset", plural = "querypresets", singular = "querypreset")
 public class QueryPreset extends AbstractExtension {
 
+    private static final String DATE_PATTERN = "^\\d{4}-\\d{2}-\\d{2}$";
+
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private Spec spec;
 
@@ -39,5 +41,34 @@ public class QueryPreset extends AbstractExtension {
 
         @Schema(description = "Sort expressions, e.g. metadata.creationTimestamp,desc")
         private List<String> sorts;
+
+        @Schema(description = "Creation date range, in the viewer's local dates")
+        private DateRange createdRange;
+
+        @Schema(description = "Export settings used when exporting with this preset")
+        private Export export;
+    }
+
+    @Data
+    public static class DateRange {
+
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, pattern = DATE_PATTERN,
+            description = "First day, inclusive, e.g. 2026-11-01")
+        private String start;
+
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, pattern = DATE_PATTERN,
+            description = "Last day, inclusive, e.g. 2026-11-30")
+        private String end;
+    }
+
+    @Data
+    public static class Export {
+
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED,
+            description = "Export format: CSV or JSON")
+        private ExportJob.Format format;
+
+        @Schema(description = "CSV columns. Ignored for JSON exports")
+        private List<ExportColumn> columns;
     }
 }

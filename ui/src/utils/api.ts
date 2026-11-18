@@ -1,8 +1,13 @@
-import type { Scheme } from '@/types';
+import type { DateRange, ListResponse, Scheme, Unstructured } from '@/types';
+import { axiosInstance } from '@halo-dev/api-client';
 import { isAxiosError } from 'axios';
+import { dateRangeBounds } from './date-range';
 import { normalizePath } from './path';
 
 export const QUERY_PRESET_API = '/apis/datastudio.halo.run/v1alpha1/querypresets';
+export const EXPORT_JOB_API = '/apis/datastudio.halo.run/v1alpha1/exportjobs';
+export const EXPORT_DOWNLOAD_API = '/apis/console.api.datastudio.halo.run/v1alpha1/exports';
+export const RECORDS_API = '/apis/console.api.datastudio.halo.run/v1alpha1/records';
 
 export interface DataListParams {
   page?: number;
@@ -11,6 +16,7 @@ export interface DataListParams {
   fieldSelectors?: string[];
   labelSelectors?: string[];
   sorts?: string[];
+  createdRange?: DateRange;
 }
 
 export function buildBaseApiUrl(scheme: Scheme) {
@@ -27,6 +33,8 @@ export interface ListParams {
   fieldSelector?: string[];
   labelSelector?: string[];
   sort?: string[];
+  createdAfter?: string;
+  createdBefore?: string;
 }
 
 export function buildListParams(query: DataListParams): ListParams {
@@ -41,7 +49,22 @@ export function buildListParams(query: DataListParams): ListParams {
   if (labelSelectors.length) params.labelSelector = labelSelectors;
   const sorts = (query.sorts || []).filter(Boolean);
   if (sorts.length) params.sort = sorts;
+  if (query.createdRange) Object.assign(params, dateRangeBounds(query.createdRange));
   return params;
+}
+
+/** Halo's own list API cannot filter by time, so ranged queries go through the plugin. */
+export async function fetchRecords(scheme: Scheme, params: ListParams) {
+  const ranged = !!(params.createdAfter || params.createdBefore);
+  const { data } = await axiosInstance.get<ListResponse<Unstructured>>(
+    ranged ? RECORDS_API : buildBaseApiUrl(scheme),
+    {
+      params: ranged
+        ? { apiVersion: schemeApiVersion(scheme), kind: scheme.groupVersionKind.kind, ...params }
+        : params,
+    }
+  );
+  return data;
 }
 
 export function schemeApiVersion(scheme: Scheme): string {
@@ -49,8 +72,16 @@ export function schemeApiVersion(scheme: Scheme): string {
   return group ? `${group}/${version}` : version;
 }
 
+function createResourceName(prefix: string): string {
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 export function createQueryPresetName(): string {
-  return `query-preset-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  return createResourceName('query-preset');
+}
+
+export function createExportJobName(): string {
+  return createResourceName('export-job');
 }
 
 export function apiErrorMessage(error: unknown, fallback: string): string {

@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import type { DataQuery, ListResponse, QueryPreset, Scheme } from '@/types';
+import type { DataQuery, ExportConfig, QueryPreset, Scheme } from '@/types';
 import {
   apiErrorMessage,
   createQueryPresetName,
   QUERY_PRESET_API,
   schemeApiVersion,
 } from '@/utils/api';
+import { normalizeExportConfig } from '@/utils/export';
 import { axiosInstance } from '@halo-dev/api-client';
 import {
   Dialog,
@@ -17,62 +18,73 @@ import {
   VModal,
   VSpace,
 } from '@halo-dev/components';
-import { useQuery, useQueryClient } from '@tanstack/vue-query';
+import { useQueryClient } from '@tanstack/vue-query';
 import { computed, shallowRef } from 'vue';
 import TablerBookmark from '~icons/tabler/bookmark';
 import TablerChevronDown from '~icons/tabler/chevron-down';
+import { QUERY_PRESETS_KEY, useQueryPresets } from '../composables/use-query-presets';
 
-const props = defineProps<{ scheme: Scheme; query: DataQuery; active?: string }>();
+const props = defineProps<{
+  scheme: Scheme;
+  query: DataQuery;
+  active?: string;
+  /** When set, saving and updating also store these export settings in the preset. */
+  exportConfig?: ExportConfig;
+  /** Trigger text when no preset is applied. */
+  placeholder?: string;
+}>();
 const emit = defineEmits<{ select: [preset: QueryPreset]; remove: [preset: QueryPreset] }>();
 
 const queryClient = useQueryClient();
-const PRESETS_KEY = ['plugin-data-studio:query-presets'];
-const {
-  data: allPresets,
-  isError,
-  refetch,
-} = useQuery({
-  queryKey: PRESETS_KEY,
-  queryFn: async () => {
-    const items: QueryPreset[] = [];
-    for (let page = 1; ; page++) {
-      const { data } = await axiosInstance.get<ListResponse<QueryPreset>>(QUERY_PRESET_API, {
-        params: { page, size: 1000 },
-      });
-      items.push(...data.items);
-      if (!data.hasNext) return items;
-    }
-  },
-});
-const presets = computed(() =>
-  (allPresets.value || [])
-    .filter(
-      (preset) =>
-        !preset.metadata.deletionTimestamp &&
-        preset.spec.apiVersion === schemeApiVersion(props.scheme) &&
-        preset.spec.kind === props.scheme.groupVersionKind.kind
-    )
-    .sort((left, right) => left.spec.displayName.localeCompare(right.spec.displayName))
-);
+const { presets, isError, refetch } = useQueryPresets(() => props.scheme);
 const activePreset = computed(() =>
   presets.value.find((preset) => preset.metadata.name === props.active)
 );
 
 function presetQuery(preset: QueryPreset): DataQuery {
+  const range = preset.spec.createdRange;
   return {
     fieldSelectors: preset.spec.fieldSelectors || [],
     labelSelectors: preset.spec.labelSelectors || [],
     sorts: preset.spec.sorts || [],
+    // The server reorders keys, which would break the JSON comparison below.
+    createdRange: range && { start: range.start, end: range.end },
   };
 }
-const hasConditions = computed(() =>
-  Object.values(props.query).some((terms: string[]) => terms.length)
+const hasConditions = computed(() => {
+  const { fieldSelectors, labelSelectors, sorts, createdRange } = props.query;
+  return !!(fieldSelectors.length || labelSelectors.length || sorts.length || createdRange);
+});
+const exportSpec = computed(() =>
+  props.exportConfig ? normalizeExportConfig(props.exportConfig) : undefined
 );
-const modified = computed(
-  () =>
-    !!activePreset.value &&
-    JSON.stringify(presetQuery(activePreset.value)) !== JSON.stringify(props.query)
+const canSave = computed(() =>
+  exportSpec.value
+    ? exportSpec.value.format === 'JSON' || exportSpec.value.columns.length > 0
+    : hasConditions.value
 );
+// A preset without export settings adopts the current ones on update without counting as modified.
+const modified = computed(() => {
+  const preset = activePreset.value;
+  if (!preset) return false;
+  if (JSON.stringify(presetQuery(preset)) !== JSON.stringify(props.query)) return true;
+  return (
+    !!exportSpec.value &&
+    !!preset.spec.export &&
+    JSON.stringify(normalizeExportConfig(preset.spec.export)) !== JSON.stringify(exportSpec.value)
+  );
+});
+const canUpdate = computed(
+  () => modified.value || (!!exportSpec.value && !activePreset.value?.spec.export)
+);
+// `createdRange` is always set so an update can also clear a stored range.
+function specChanges() {
+  return {
+    ...props.query,
+    createdRange: props.query.createdRange,
+    ...(exportSpec.value ? { export: exportSpec.value } : {}),
+  };
+}
 
 const saveModalVisible = shallowRef(false);
 const saving = shallowRef(false);
@@ -93,11 +105,11 @@ async function create({ displayName }: { displayName: string }) {
         displayName: name,
         apiVersion: schemeApiVersion(props.scheme),
         kind: props.scheme.groupVersionKind.kind,
-        ...props.query,
+        ...specChanges(),
       },
     });
     saveModalVisible.value = false;
-    await queryClient.invalidateQueries({ queryKey: PRESETS_KEY });
+    await queryClient.invalidateQueries({ queryKey: QUERY_PRESETS_KEY });
     emit('select', data);
     Toast.success('已保存');
   } catch (error) {
@@ -110,9 +122,9 @@ async function update(preset: QueryPreset) {
   try {
     const { data } = await axiosInstance.put<QueryPreset>(
       `${QUERY_PRESET_API}/${encodeURIComponent(preset.metadata.name)}`,
-      { ...preset, spec: { ...preset.spec, ...props.query } }
+      { ...preset, spec: { ...preset.spec, ...specChanges() } }
     );
-    await queryClient.invalidateQueries({ queryKey: PRESETS_KEY });
+    await queryClient.invalidateQueries({ queryKey: QUERY_PRESETS_KEY });
     emit('select', data);
     Toast.success('已更新');
   } catch (error) {
@@ -130,7 +142,7 @@ function remove(preset: QueryPreset) {
           `${QUERY_PRESET_API}/${encodeURIComponent(preset.metadata.name)}`
         );
         // Deletion is finalized asynchronously, so a refetch may still return it.
-        queryClient.setQueryData<QueryPreset[]>(PRESETS_KEY, (items) =>
+        queryClient.setQueryData<QueryPreset[]>(QUERY_PRESETS_KEY, (items) =>
           items?.filter((item) => item.metadata.name !== preset.metadata.name)
         );
         emit('remove', preset);
@@ -147,8 +159,10 @@ function remove(preset: QueryPreset) {
   <VDropdown>
     <VButton class="studio-preset-trigger" :class="{ active: !!activePreset }">
       <TablerBookmark aria-hidden="true" />
-      <span class="studio-preset-trigger-name">{{ activePreset?.spec.displayName || '方案' }}</span>
-      <span v-if="modified" class="studio-preset-modified" title="条件已修改">*</span>
+      <span class="studio-preset-trigger-name">{{
+        activePreset?.spec.displayName || placeholder || '查询方案'
+      }}</span>
+      <span v-if="modified" class="studio-preset-modified" title="方案已修改">*</span>
       <TablerChevronDown aria-hidden="true" />
     </VButton>
     <template #popper>
@@ -164,12 +178,11 @@ function remove(preset: QueryPreset) {
           {{ preset.spec.displayName }}
         </VDropdownItem>
         <VDropdownDivider v-if="presets.length || isError" />
-        <VDropdownItem v-close-popper :disabled="!hasConditions" @click="saveModalVisible = true"
+        <VDropdownItem v-close-popper :disabled="!canSave" @click="saveModalVisible = true"
           >保存为新方案…</VDropdownItem
         >
-        <p v-if="!hasConditions" class="studio-preset-hint">先设置条件再保存</p>
         <template v-if="activePreset">
-          <VDropdownItem v-if="modified" v-close-popper @click="update(activePreset)"
+          <VDropdownItem v-if="canUpdate" v-close-popper @click="update(activePreset)"
             >更新「{{ activePreset.spec.displayName }}」</VDropdownItem
           >
           <VDropdownItem v-close-popper type="danger" @click="remove(activePreset)"

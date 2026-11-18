@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import type { DataQuery } from '@/types';
+import type { DataQuery, DateRange } from '@/types';
 import { VButton } from '@halo-dev/components';
 import { computed, shallowRef, watch } from 'vue';
+import TablerX from '~icons/tabler/x';
+import DateRangePicker from './DateRangePicker.vue';
 
 const props = defineProps<{ query: DataQuery }>();
 const emit = defineEmits<{ apply: [query: DataQuery]; close: [] }>();
@@ -20,6 +22,7 @@ function lines(value: string): string[] {
 const fieldText = shallowRef('');
 const labelText = shallowRef('');
 const sortText = shallowRef('');
+const createdRange = shallowRef<DateRange>();
 // Route updates can recreate equal arrays; only a real change may replace the draft.
 watch(
   () => JSON.stringify(props.query),
@@ -28,6 +31,7 @@ watch(
     fieldText.value = query.fieldSelectors.join('\n');
     labelText.value = query.labelSelectors.join('\n');
     sortText.value = query.sorts.join('\n');
+    createdRange.value = query.createdRange;
   },
   { immediate: true }
 );
@@ -35,6 +39,7 @@ const draft = computed<DataQuery>(() => ({
   fieldSelectors: lines(fieldText.value),
   labelSelectors: lines(labelText.value),
   sorts: lines(sortText.value),
+  createdRange: createdRange.value,
 }));
 const dirty = computed(() => JSON.stringify(draft.value) !== JSON.stringify(props.query));
 
@@ -78,6 +83,21 @@ function apply() {
         placeholder="metadata.creationTimestamp,desc&#10;metadata.name"
       ></textarea>
     </label>
+    <div class="studio-query-panel-row">
+      <span>创建时间</span>
+      <div class="studio-query-panel-range">
+        <DateRangePicker v-model="createdRange" />
+        <button
+          v-if="createdRange"
+          type="button"
+          class="studio-query-panel-clear"
+          aria-label="清除创建时间"
+          @click="createdRange = undefined"
+        >
+          <TablerX aria-hidden="true" />
+        </button>
+      </div>
+    </div>
     <div class="studio-query-panel-actions">
       <VButton size="sm" @click="emit('close')">收起</VButton>
       <VButton size="sm" type="secondary" :disabled="!dirty" title="Ctrl / ⌘ + Enter" @click="apply"

@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import WarningModal from '@/components/WarningModal.vue';
-import type { DataQuery, ListResponse, QueryPreset, Scheme, Unstructured } from '@/types';
-import { apiErrorMessage, apiErrorStatus, buildBaseApiUrl, buildListParams } from '@/utils/api';
+import type { DataQuery, QueryPreset, Scheme, Unstructured } from '@/types';
+import {
+  apiErrorMessage,
+  apiErrorStatus,
+  buildBaseApiUrl,
+  buildListParams,
+  fetchRecords,
+} from '@/utils/api';
+import { formatDateRange, parseDateRange, stringifyDateRange } from '@/utils/date-range';
 import { axiosInstance } from '@halo-dev/api-client';
 import {
   Dialog,
@@ -19,6 +26,7 @@ import { useRouteQuery } from '@vueuse/router';
 import { computed, nextTick, ref, shallowRef, watch } from 'vue';
 import TablerArrowDown from '~icons/tabler/arrow-down';
 import TablerArrowUp from '~icons/tabler/arrow-up';
+import TablerCalendar from '~icons/tabler/calendar';
 import TablerChevronLeft from '~icons/tabler/chevron-left';
 import TablerChevronRight from '~icons/tabler/chevron-right';
 import TablerDatabaseEdit from '~icons/tabler/database-edit';
@@ -26,8 +34,10 @@ import TablerFilter from '~icons/tabler/filter';
 import TablerSearch from '~icons/tabler/search';
 import TablerX from '~icons/tabler/x';
 import DataBatchImportModal from './components/DataBatchImportModal.vue';
+import DataExportModal from './components/DataExportModal.vue';
 import DataListItem from './components/DataListItem.vue';
 import DataUpdateSection from './components/DataUpdateSection.vue';
+import ExportHistoryModal from './components/ExportHistoryModal.vue';
 import ModelSelector from './components/ModelSelector.vue';
 import QueryPanel from './components/QueryPanel.vue';
 import QueryPresetMenu from './components/QueryPresetMenu.vue';
@@ -71,15 +81,22 @@ const labelSelectors = useRouteQuery<string | string[], string[]>('labelSelector
   transform: toTerms,
 });
 const sorts = useRouteQuery<string | string[], string[]>('sort', [], { transform: toTerms });
+const createdParam = useRouteQuery<string>('created', '');
+const createdRange = computed(() => parseDateRange(createdParam.value));
 const activePreset = useRouteQuery<string>('preset', '');
 const appliedQuery = computed<DataQuery>(() => ({
   fieldSelectors: fieldSelectors.value,
   labelSelectors: labelSelectors.value,
   sorts: sorts.value,
+  createdRange: createdRange.value,
 }));
 const queryPanelVisible = shallowRef(false);
 const customQueryCount = computed(
-  () => fieldSelectors.value.length + labelSelectors.value.length + sorts.value.length
+  () =>
+    fieldSelectors.value.length +
+    labelSelectors.value.length +
+    sorts.value.length +
+    (createdRange.value ? 1 : 0)
 );
 const hasCustomQuery = computed(() => customQueryCount.value > 0);
 function sortTerm(term: string) {
@@ -96,21 +113,19 @@ const { data, isLoading, isError, error, refetch } = useQuery({
     fieldSelectors,
     labelSelectors,
     sorts,
+    createdRange,
   ],
   queryFn: async () => {
     if (!selectedScheme.value) return;
-    return (
-      await axiosInstance.get<ListResponse<Unstructured>>(buildBaseApiUrl(selectedScheme.value), {
-        params: buildListParams({
-          page: page.value,
-          size: size.value,
-          keyword: keyword.value,
-          fieldSelectors: fieldSelectors.value,
-          labelSelectors: labelSelectors.value,
-          sorts: sorts.value,
-        }),
+    return fetchRecords(
+      selectedScheme.value,
+      buildListParams({
+        page: page.value,
+        size: size.value,
+        keyword: keyword.value,
+        ...appliedQuery.value,
       })
-    ).data;
+    );
   },
   refetchInterval: (data) =>
     data?.items.some((item) => !!item.metadata.deletionTimestamp) ? 1000 : false,
@@ -130,6 +145,7 @@ function applyQuery(query: DataQuery) {
   fieldSelectors.value = query.fieldSelectors;
   labelSelectors.value = query.labelSelectors;
   sorts.value = query.sorts;
+  createdParam.value = stringifyDateRange(query.createdRange);
   page.value = 1;
 }
 function applyPreset(preset: QueryPreset) {
@@ -137,10 +153,11 @@ function applyPreset(preset: QueryPreset) {
     fieldSelectors: preset.spec.fieldSelectors || [],
     labelSelectors: preset.spec.labelSelectors || [],
     sorts: preset.spec.sorts || [],
+    createdRange: preset.spec.createdRange,
   });
   activePreset.value = preset.metadata.name;
 }
-function removeTerm(key: keyof DataQuery, index: number) {
+function removeTerm(key: 'fieldSelectors' | 'labelSelectors' | 'sorts', index: number) {
   applyQuery({
     ...appliedQuery.value,
     [key]: appliedQuery.value[key].filter((_, i) => i !== index),
@@ -187,14 +204,27 @@ function saved(item: Unstructured) {
   selectedData.value = item;
   isCreating.value = false;
 }
+const batchImportModalVisible = shallowRef(false);
+const exportModalVisible = shallowRef(false);
+const exportSelectionNames = shallowRef<string[]>();
+const exportHistoryVisible = shallowRef(false);
+function openExport(selection?: string[]) {
+  exportSelectionNames.value = selection;
+  exportModalVisible.value = true;
+}
+function openExportHistory() {
+  exportModalVisible.value = false;
+  exportHistoryVisible.value = true;
+}
 watch(selectedSchemeName, () => {
   selectedData.value = undefined;
   isCreating.value = false;
   keyword.value = '';
+  exportModalVisible.value = false;
+  exportHistoryVisible.value = false;
   clearQuery();
 });
 
-const batchImportModalVisible = shallowRef(false);
 const { open } = useDataImport(selectedScheme);
 const selectedItems = ref(new Set<string>());
 const isSelectAll = computed(
@@ -217,18 +247,6 @@ function selectAll() {
 function selectItem(item: Unstructured) {
   if (selectedItems.value.has(item.metadata.name)) selectedItems.value.delete(item.metadata.name);
   else selectedItems.value.add(item.metadata.name);
-}
-function exportSelection() {
-  const items = data.value?.items.filter((item) => selectedItems.value.has(item.metadata.name));
-  if (!items?.length) return;
-  const url = URL.createObjectURL(
-    new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' })
-  );
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `${selectedScheme.value?.groupVersionKind.kind}-batch-export.json`;
-  link.click();
-  URL.revokeObjectURL(url);
 }
 function deleteSelection() {
   if (!selectedScheme.value) return;
@@ -261,6 +279,25 @@ function deleteSelection() {
     v-if="batchImportModalVisible && selectedScheme"
     :scheme="selectedScheme"
     @close="batchImportModalVisible = false"
+  />
+  <DataExportModal
+    v-if="exportModalVisible && selectedScheme"
+    :scheme="selectedScheme"
+    v-model:keyword="keyword"
+    :query="appliedQuery"
+    :selection="exportSelectionNames"
+    :active-preset="activePreset"
+    @update:query="applyQuery"
+    @select-preset="applyPreset"
+    @remove-preset="presetRemoved"
+    @close="exportModalVisible = false"
+    @created="openExportHistory"
+    @history="openExportHistory"
+  />
+  <ExportHistoryModal
+    v-if="exportHistoryVisible && selectedScheme"
+    :scheme="selectedScheme"
+    @close="exportHistoryVisible = false"
   />
   <!-- Follow VPageHeader's title structure, with the model picker beside it. -->
   <header class="page-header studio-page-header">
@@ -305,6 +342,7 @@ function deleteSelection() {
                     >
                   </template>
                 </VDropdown>
+                <VButton size="sm" @click="openExport()">导出</VButton>
                 <VButton size="sm" type="secondary" @click="edit()">新增</VButton>
               </div>
             </div>
@@ -333,7 +371,7 @@ function deleteSelection() {
                   @click="queryPanelVisible = !queryPanelVisible"
                 >
                   <TablerFilter aria-hidden="true" />
-                  条件<span v-if="customQueryCount"> · {{ customQueryCount }}</span>
+                  查询条件<span v-if="customQueryCount"> · {{ customQueryCount }}</span>
                 </VButton>
                 <QueryPresetMenu
                   :scheme="selectedScheme"
@@ -352,6 +390,17 @@ function deleteSelection() {
               @close="queryPanelVisible = false"
             />
             <div v-if="!queryPanelVisible && hasCustomQuery" class="studio-query-summary">
+              <span v-if="createdRange" class="studio-query-term" title="创建时间"
+                ><TablerCalendar aria-hidden="true" /><span>{{
+                  formatDateRange(createdRange)
+                }}</span
+                ><button
+                  type="button"
+                  aria-label="移除创建时间"
+                  @click="applyQuery({ ...appliedQuery, createdRange: undefined })"
+                >
+                  <TablerX aria-hidden="true" /></button
+              ></span>
               <span
                 v-for="(term, index) in fieldSelectors"
                 :key="`field:${term}`"
@@ -407,7 +456,7 @@ function deleteSelection() {
             </label>
             <template v-if="selectedItems.size">
               <span class=":uno: text-xs text-gray-500">已选 {{ selectedItems.size }} 条</span>
-              <VButton size="xs" @click="exportSelection">导出</VButton>
+              <VButton size="xs" @click="openExport([...selectedItems])">导出</VButton>
               <VButton size="xs" type="danger" @click="deleteSelection">删除</VButton>
             </template>
           </div>
