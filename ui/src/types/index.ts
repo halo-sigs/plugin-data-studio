@@ -32,3 +32,25 @@ export interface Scheme {
   singular: string;
   openApiSchema: object;
 }
+
+export interface QueryPresetSpec {
+  displayName: string;
+  apiVersion: string;
+  kind: string;
+  fieldSelectors?: string[];
+  labelSelectors?: string[];
+  sorts?: string[];
+}
+
+export interface QueryPreset {
+  apiVersion: string;
+  kind: string;
+  metadata: Metadata;
+  spec: QueryPresetSpec;
+}
+
+export interface DataQuery {
+  fieldSelectors: string[];
+  labelSelectors: string[];
+  sorts: string[];
+}
