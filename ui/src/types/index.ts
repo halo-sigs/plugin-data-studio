@@ -40,6 +40,9 @@ export interface QueryPresetSpec {
   fieldSelectors?: string[];
   labelSelectors?: string[];
   sorts?: string[];
+  createdRange?: DateRange;
+  /** Export settings applied when exporting with this preset. */
+  export?: ExportConfig;
 }
 
 export interface QueryPreset {
@@ -49,8 +52,64 @@ export interface QueryPreset {
   spec: QueryPresetSpec;
 }
 
+/** Inclusive local calendar dates, formatted as YYYY-MM-DD. */
+export interface DateRange {
+  start: string;
+  end: string;
+}
+
 export interface DataQuery {
   fieldSelectors: string[];
   labelSelectors: string[];
   sorts: string[];
+  /** Halo field selectors cannot compare, so this is sent separately. */
+  createdRange?: DateRange;
+}
+
+export type ExportFormat = 'CSV' | 'JSON';
+
+export interface ExportColumn {
+  field: string;
+  header?: string;
+}
+
+export interface ExportConfig {
+  format: ExportFormat;
+  columns?: ExportColumn[];
+}
+
+export type ExportJobPhase = 'PENDING' | 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'EXPIRED';
+
+export interface ExportJobSpec {
+  apiVersion: string;
+  kind: string;
+  format: ExportFormat;
+  columns?: ExportColumn[];
+  fieldSelectors?: string[];
+  labelSelectors?: string[];
+  sorts?: string[];
+  /** Inclusive ISO instant. */
+  createdAfter?: string;
+  /** Exclusive ISO instant. */
+  createdBefore?: string;
+}
+
+export interface ExportJobStatus {
+  phase: ExportJobPhase;
+  total?: number;
+  processed?: number;
+  bytes?: number;
+  fileName?: string;
+  mediaType?: string;
+  message?: string;
+  startedAt?: string;
+  completedAt?: string;
+}
+
+export interface ExportJob {
+  apiVersion: string;
+  kind: string;
+  metadata: Metadata;
+  spec: ExportJobSpec;
+  status?: ExportJobStatus;
 }

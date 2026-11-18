@@ -12,8 +12,18 @@ const VButton = defineComponent({
 });
 const empty: DataQuery = { fieldSelectors: [], labelSelectors: [], sorts: [] };
 
+const DateRangePicker = defineComponent({
+  props: ['modelValue'],
+  emits: ['update:modelValue'],
+  template: '<span class="range">{{ modelValue && modelValue.start }}</span>',
+});
+const range = { start: '2026-11-01', end: '2026-11-18' };
+
 function mountPanel(query: DataQuery = empty) {
-  return mount(QueryPanel, { props: { query }, global: { stubs: { VButton } } });
+  return mount(QueryPanel, {
+    props: { query },
+    global: { stubs: { VButton, DateRangePicker } },
+  });
 }
 function applyButton(wrapper: ReturnType<typeof mountPanel>) {
   return wrapper.findAll('button').find((button) => button.text() === '应用')!;
@@ -70,6 +80,29 @@ describe('QueryPanel', () => {
     await wrapper.setProps({ query: { ...query, fieldSelectors: [...query.fieldSelectors] } });
 
     expect(wrapper.findAll('textarea')[1]!.element.value).toBe('app=draft');
+  });
+
+  it('applies a picked creation range together with the other terms', async () => {
+    const wrapper = mountPanel();
+    wrapper.findComponent(DateRangePicker).vm.$emit('update:modelValue', range);
+    await wrapper.findAll('textarea')[0]!.setValue('spec.slug=a');
+    await applyButton(wrapper).trigger('click');
+
+    expect(wrapper.emitted('apply')?.[0]).toEqual([
+      { ...empty, fieldSelectors: ['spec.slug=a'], createdRange: range },
+    ]);
+  });
+
+  it('clears the applied creation range', async () => {
+    const wrapper = mountPanel({ ...empty, createdRange: range });
+    expect(applyButton(wrapper).attributes('disabled')).toBeDefined();
+    expect(wrapper.findComponent(DateRangePicker).props('modelValue')).toEqual(range);
+
+    await wrapper.get('button[aria-label="清除创建时间"]').trigger('click');
+    await applyButton(wrapper).trigger('click');
+
+    expect(wrapper.emitted('apply')?.[0]).toEqual([empty]);
+    expect(wrapper.find('button[aria-label="清除创建时间"]').exists()).toBe(false);
   });
 
   it('drops duplicate lines', async () => {
